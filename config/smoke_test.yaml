@@ -1,0 +1,5 @@
+# Quick validation on CIFAR-10 (256 images)
+model: "resnet50.a1_in1k"
+dataset: "cifar10"
+data_root: "./data"
+num_workers: 2

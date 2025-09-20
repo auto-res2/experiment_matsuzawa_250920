@@ -1,0 +1,5 @@
+# Full-scale ImageNet-val evaluation
+model: "resnet50.a1_in1k"
+dataset: "imagenet"
+data_root: "./data/imagenet"
+num_workers: 8
