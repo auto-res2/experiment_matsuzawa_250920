@@ -6,5 +6,82 @@
     "accelerated online adaptation",
     "meta-learning test-time adaptation",
     "batch-norm test-time adaptation"
+  ],
+  "research_study_list": [
+    {
+      "title": "Test Time Adaptation With Regularized Loss for Weakly Supervised Salient Object Detection"
+    },
+    {
+      "title": "Tent: Fully Test-Time Adaptation by Entropy Minimization"
+    },
+    {
+      "title": "What How and When Should Object Detectors Update in Continually Changing Test Domains?"
+    },
+    {
+      "title": "DELTA: DEGRADATION-FREE FULLY TEST-TIME ADAPTATION"
+    },
+    {
+      "title": "Test-Time Training with Self-Supervision for Generalization under Distribution Shifts"
+    },
+    {
+      "title": "Active Test-Time Adaptation: Theoretical Analyses and An Algorithm"
+    },
+    {
+      "title": "Improved Test-Time Adaptation for Domain Generalization"
+    },
+    {
+      "title": "AETTA: Label-Free Accuracy Estimation for Test-Time Adaptation"
+    },
+    {
+      "title": "Robust Test-Time Adaptation in Dynamic Scenarios"
+    },
+    {
+      "title": "TEA: Test-time Energy Adaptation"
+    },
+    {
+      "title": "A simpler approach to accelerated optimization: iterative averaging meets optimism"
+    },
+    {
+      "title": "Provably Efficient Model-based Policy Adaptation"
+    },
+    {
+      "title": "Online Active Regression"
+    },
+    {
+      "title": "Online Active Regression"
+    },
+    {
+      "title": "Efficient Non-stationary Online Learning by Wavelets with Applications to Online Distribution Shift Adaptation"
+    },
+    {
+      "title": "Test Time Adaptation via Conjugate Pseudo-labels"
+    },
+    {
+      "title": "Active Test-Time Adaptation: Theoretical Analyses and An Algorithm"
+    },
+    {
+      "title": "EcoTTA: Memory-Efficient Continual Test-Time Adaptation via Self-Distilled Regularization"
+    },
+    {
+      "title": "Robust Test-Time Adaptation in Dynamic Scenarios"
+    },
+    {
+      "title": "Improved Test-Time Adaptation for Domain Generalization"
+    },
+    {
+      "title": "TTN: A Domain-Shift Aware Batch Normalization in Test-Time Adaptation"
+    },
+    {
+      "title": "Un-Mixing Test-Time Normalization Statistics: Combatting Label Temporal Correlation"
+    },
+    {
+      "title": "NOTE: Robust Continual Test-time Adaptation Against Temporal Correlation"
+    },
+    {
+      "title": "DELTA: DEGRADATION-FREE FULLY TEST-TIME ADAPTATION"
+    },
+    {
+      "title": "MedBN: Robust Test-Time Adaptation against Malicious Test Samples"
+    }
   ]
 }
