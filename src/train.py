@@ -70,9 +70,17 @@ class ECOGATConv(GATConv):
     def forward(self, x, edge_index, size=None):  # type: ignore[override]
         out, (idx, attn) = super().forward(x, edge_index, size, return_attention_weights=True)
         if self.training:
-            phi = (attn.detach() * x[edge_index[0]].norm(dim=1))  # gradient-norm proxy
-            qerr = self.fake_quant(x[edge_index[0]].detach())  # reuse quant tensor to estimate error
-            qerr = (x[edge_index[0]] - qerr).abs().mean(dim=1)
+            # Debug shapes
+            # print(f"attn shape: {attn.shape}, idx shape: {idx.shape}, edge_index[0] shape: {edge_index[0].shape}")
+            # Use idx (the actual edge indices used for attention) instead of edge_index[0]
+            node_norms = x[idx[0]].norm(dim=1)  # (num_actual_edges,)
+            if len(attn.shape) > 1:
+                attn_mean = attn.detach().mean(dim=1)  # average over heads: (num_actual_edges,)
+            else:
+                attn_mean = attn.detach()  # already single head: (num_actual_edges,)
+            phi = attn_mean * node_norms  # gradient-norm proxy
+            qerr = self.fake_quant(x[idx[0]].detach())  # reuse quant tensor to estimate error
+            qerr = (x[idx[0]] - qerr).abs().mean(dim=1)
             bw = self.solver.solve(phi, qerr)
             # Persist bit-width decisions for later analysis
             self.register_buffer('bw', bw, persistent=False)

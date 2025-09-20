@@ -20,30 +20,59 @@ def load_cfg(path: Path) -> dict:
 
 
 def run_experiment(cfg: dict, run_name: str):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Try CUDA first, fall back to CPU if memory issues
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"[INFO] Using CUDA device with {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB total memory")
+    else:
+        device = torch.device("cpu")
+        print("[INFO] Using CPU device")
 
     # 1. Data -----------------------------------------------------------------
     data, num_features = load_dataset(cfg["dataset"])
-    data = data.to(device)
 
-    # 2. Model ----------------------------------------------------------------
-    model = ECOGAT(
-        in_channels=num_features,
-        hidden_channels=cfg.get("hidden_channels", 64),
-        out_channels=int(data.y.max().item() + 1),
-        heads=cfg.get("heads", 4),
-        flop_budget=cfg.get("flop_budget", 0.2),
-        q_err_budget=cfg.get("quant_err_budget", 0.02),
-    ).to(device)
+    try:
+        data = data.to(device)
+
+        # 2. Model ----------------------------------------------------------------
+        model = ECOGAT(
+            in_channels=num_features,
+            hidden_channels=cfg.get("hidden_channels", 64),
+            out_channels=int(data.y.max().item() + 1),
+            heads=cfg.get("heads", 4),
+            flop_budget=cfg.get("flop_budget", 0.2),
+            q_err_budget=cfg.get("quant_err_budget", 0.02),
+        ).to(device)
+    except torch.cuda.OutOfMemoryError:
+        print("[WARN] CUDA out of memory, falling back to CPU")
+        device = torch.device("cpu")
+        data = data.to(device)
+        model = ECOGAT(
+            in_channels=num_features,
+            hidden_channels=cfg.get("hidden_channels", 64),
+            out_channels=int(data.y.max().item() + 1),
+            heads=cfg.get("heads", 4),
+            flop_budget=cfg.get("flop_budget", 0.2),
+            q_err_budget=cfg.get("quant_err_budget", 0.02),
+        ).to(device)
 
     # 3. Optimiser ------------------------------------------------------------
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.get("lr", 0.005), weight_decay=5e-4)
 
     # 4. Training loop --------------------------------------------------------
     for epoch in range(1, cfg.get("epochs", 1) + 1):
-        loss = train(model, data, optimizer, device)
-        if epoch % max(1, cfg.get("log_every", 1)) == 0:
-            print(f"Epoch {epoch:03d} | loss = {loss:.4f}")
+        try:
+            loss = train(model, data, optimizer, device)
+            if epoch % max(1, cfg.get("log_every", 1)) == 0:
+                print(f"Epoch {epoch:03d} | loss = {loss:.4f}")
+        except torch.cuda.OutOfMemoryError:
+            print(f"[WARN] CUDA out of memory at epoch {epoch}, falling back to CPU")
+            device = torch.device("cpu")
+            model = model.to(device)
+            data = data.to(device)
+            loss = train(model, data, optimizer, device)
+            if epoch % max(1, cfg.get("log_every", 1)) == 0:
+                print(f"Epoch {epoch:03d} | loss = {loss:.4f}")
 
     # 5. Evaluation & Logging -------------------------------------------------
     evaluate_and_log(model, data, device, run_name)

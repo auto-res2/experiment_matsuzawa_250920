@@ -3,6 +3,7 @@ import os
 from typing import Tuple
 
 import torch
+import torch_geometric.data
 from torch_geometric.datasets import Planetoid, Reddit
 from torch_geometric.transforms import NormalizeFeatures
 

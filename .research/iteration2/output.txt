@@ -1,0 +1,14 @@
+=== [PHASE 2/2] Full experiment start Sat Sep 20 04:37:01 PM UTC 2025 ===
+[INFO] Running preliminary smoke test …
+[INFO] Using CUDA device with 85.0 GB total memory
+Epoch 001 | loss = 1.9468
+{
+  "timestamp": "2025-09-20T16:37:05.795719",
+  "run_name": "smoke_test",
+  "train_acc": 0.30000001192092896,
+  "val_acc": 0.18400001525878906,
+  "test_acc": 0.2110000103712082
+}
+[INFO] Smoke test completed ✅ – proceeding to full experiment …
+[INFO] Using CUDA device with 85.0 GB total memory
+[WARN] CUDA out of memory at epoch 1, falling back to CPU

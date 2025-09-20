@@ -5,16 +5,18 @@ description = "Refactored ECO-GAT experiment into a structured, multi-file proje
 authors = ["ML Researcher <researcher@example.com>"]
 readme = "README.md"
 requires-python = ">=3.9"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[project.optional-dependencies]
 # Core scientific stack & PyG (CUDA-enabled wheels are resolved by pip based on platform tags)
 dependencies = [
     "torch>=2.1.0",
     "torch-geometric>=2.4.0",
     "torch-scatter>=2.1.0",
+    "scipy>=1.7.0",
     "pyyaml>=6.0",
     "numpy>=1.21.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.extra-build-dependencies]
+torch-scatter = ["torch"]

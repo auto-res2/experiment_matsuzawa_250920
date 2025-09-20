@@ -2,9 +2,9 @@
 # Uses the Reddit dataset, a larger hidden dim and more epochs.
 
 dataset: reddit
-epochs: 5
-hidden_channels: 128
-heads: 8
+epochs: 3
+hidden_channels: 64
+heads: 4
 lr: 0.003
 flop_budget: 0.2
 quant_err_budget: 0.02
