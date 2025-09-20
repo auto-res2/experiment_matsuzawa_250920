@@ -1,6 +1,9 @@
-seed: 0
-sketch:
-  n_keys: 10000  # tiny size for CI
-  max_val: 1.0
-  rows: 3
-  w: 32
+# quick CI configuration
+run_name: smoke_test_zero_sketch
+verbose: true
+rows: 3
+w: 32
+epochs: 1
+batches_per_epoch: 2
+batch_size: 128
+target_l1: 0.35

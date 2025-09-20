@@ -1,40 +1,23 @@
 import json
-import os
-from typing import Dict, Any
+from pathlib import Path
 
-import torch
+__all__ = ["evaluate"]
 
-__all__ = ["evaluate_sketch"]
-
-
-def evaluate_sketch(metrics: Dict[str, Any]) -> None:
-    """Pretty-print metrics and persist them under .research/iteration5/.
-
-    All CI artefacts *must* be written to `.research/iteration5/` – the
-    grading harness asserts the path.  The JSON file is re-opened and
-    printed back to STDOUT for immediate visual confirmation.
-    """
-
-    # ---------------------------- STDOUT summary -----------------------------
-    print("\n===== ZeroSketch Evaluation =====")
-    for k, v in metrics.items():
-        print(f"{k:>12}: {v}")
-    print("================================\n")
-
-    # ----------------------- persist results for CI run ----------------------
-    out_dir = os.path.join(".research", "iteration5")
-    os.makedirs(out_dir, exist_ok=True)
-    file_name = f"result_sketch_{metrics['n_keys']}.json"
-    path = os.path.join(out_dir, file_name)
-
-    try:
-        with open(path, "w", encoding="utf-8") as fp:
-            json.dump(metrics, fp, indent=2)
-    except IOError as e:
-        raise RuntimeError(f"Could not write metrics JSON → {e}") from e
-
-    # ---------- re-open & print the JSON so the runner can verify -------------
-    with open(path, "r", encoding="utf-8") as fp:
-        loaded = json.load(fp)
-    print("Persisted metrics:")
-    print(json.dumps(loaded, indent=2))
+def evaluate(metrics: dict, cfg: dict) -> None:
+    """Simple evaluation that echoes metrics and marks pass/fail against a threshold."""
+    thresh = cfg.get("target_l1", 0.25)
+    status = "PASS" if metrics["final_l1_error"] <= thresh else "FAIL"
+    report = {
+        "status": status,
+        "threshold": thresh,
+        "final_l1_error": metrics["final_l1_error"],
+    }
+    # save side-car report
+    out_dir = Path(".research") / "iteration6"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / (cfg.get("run_name", "sketch_run") + "_eval.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+    # always print to stdout as requested
+    print("Evaluation report →", path)
+    print(json.dumps(report, indent=2))

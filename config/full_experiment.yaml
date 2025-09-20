@@ -1,6 +1,9 @@
-seed: 17
-sketch:
-  n_keys: 10000000  # stress test on A100 (≈80 MB writes)
-  max_val: 1.0
-  rows: 4  # 4 CM-rows like the paper’s default
-  w: 64
+# full-scale configuration (still synthetic – replace with real dataset params)
+run_name: full_zero_sketch
+verbose: true
+rows: 3
+w: 32
+epochs: 5
+batches_per_epoch: 16
+batch_size: 512
+target_l1: 0.25

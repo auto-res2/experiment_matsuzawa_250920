@@ -1,16 +1,24 @@
+[project]
+name = "hawq_skim_zero_sketch"
+version = "0.1.0"
+description = "Refactored Zero-Sketch demo extracted from HAWQ-Skim experiment code."
+authors = [
+  { name = "Researcher", email = "research@example.com" }
+]
+requires-python = ">=3.10"
+readme = "README.md"
+
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "zerosketch-experiment"
-version = "0.1.0"
-description = "Refactored ZeroSketch experiment (smoke/full)"
-readme = "README.md"
-requires-python = ">=3.10"
+[tool.setuptools.packages.find]
+where = ["src"]
 
-# Strict list to keep the runtime lean and deterministic.
-# PyYAML is needed for config parsing; torch for the sketch itself.
+[project.optional-dependencies]
+# kept minimal – torch / pyyaml are enough for this snippet
+main = []
+
 dependencies = [
   "torch>=1.9.0",
   "PyYAML>=6.0",

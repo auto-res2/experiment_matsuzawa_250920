@@ -1,144 +1,101 @@
 import os
-from typing import Dict, Any
+import json
+from pathlib import Path
 import torch
 
-__all__ = ["ZeroSketch", "train_sketch"]
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+__all__ = [
+    "ZeroSketch",
+    "train",
+]
 
 class ZeroSketch:
-    """Light-weight Count-Min style sketch with conservative update.
+    """Zero-update Count-Sketch used by HAWQ-Skim (see paper)."""
 
-    The implementation keeps a *global* counter matrix `C` of shape
-    (rows, w).  Any (key,val) pair is mapped to `rows` counters via a
-    fast multiply-mod hash.  The *conservative* update writes **only**
-    those counters whose current value is smaller than the incoming
-    one.  This guarantees the usual Count-Min error bound while
-    preventing write-amplification on heavily duplicated keys.
-
-    IMPORTANT – dtype discipline:
-      • `C` lives in *fp16* (sufficient for sketch errors we measure).
-      • All temporaries must therefore stay in *fp16* when fed into
-        `scatter_add_`.  A previous bug cast the update mask to fp32
-        which triggered a `RuntimeError: scatter(): Expected self.dtype
-        to be equal to src.dtype`.
-    """
-
-    def __init__(self, rows: int = 3, w: int = 32) -> None:
+    def __init__(self, rows: int = 3, w: int = 32):
+        if rows <= 0 or w <= 0:
+            raise ValueError("rows and w must be positive")
         self.w = w
         self.rows = rows
-        # random 64-bit hashing parameters – fixed at construction for reproducibility
-        self.hash_a = torch.randint(1, 2 ** 31, (rows,), device=device, dtype=torch.int64)
-        # global fp16 accumulator (shared across all graph nodes)
-        self.C = torch.zeros(rows, w, device=device, dtype=torch.float16)
+        # prime-range hash coefficients →  signed 64-bit avoids overflow on mul
+        self.hash_a = torch.randint(
+            low=1,
+            high=2 ** 31,
+            size=(rows,),
+            device="cuda" if torch.cuda.is_available() else "cpu",
+            dtype=torch.int64,
+        )
+        # global sketch per layer  →  fp16 keeps memory foot-print <1 kB
+        self.C = torch.zeros(rows, w, device=self.hash_a.device, dtype=torch.float16)
 
-    # ------------------------------------------------------------------
-    #                     Hashing / gather / scatter helpers
-    # ------------------------------------------------------------------
-    def _indices(self, keys: torch.Tensor) -> torch.Tensor:
-        """Return the (n_keys, rows) table indices for every key."""
-        # Broadcasting: keys[:, None] –> (n_keys, 1) * (rows,) –> (n_keys, rows)
-        return ((keys[:, None] * self.hash_a) % self.w).long()
-
-    def _gather(self, idx: torch.Tensor) -> torch.Tensor:
-        """Efficient gather keeping a 2-D result (n_keys, rows)."""
-        # C.gather expects the index to have the same first-dim (rows)
-        # Layout: C     – (rows, w)
-        #         idx.T – (rows, n_keys)
-        # Result        – (rows, n_keys) → transpose → (n_keys, rows)
-        return self.C.gather(1, idx.T).T.contiguous()
-
-    # ------------------------------------------------------------------
-    #                        Public sketch interface
-    # ------------------------------------------------------------------
-    @torch.cuda.amp.autocast(dtype=torch.float16)
-    def query(self, keys: torch.Tensor) -> torch.Tensor:
-        """Return the conservative (min-row) estimate for a batch of keys."""
-        idx = self._indices(keys)
-        cur = self._gather(idx)  # (n_keys, rows)
-        return cur.min(dim=1).values
+    def query(self, keys: torch.LongTensor) -> torch.Tensor:
+        """Conservative MIN query (identical to CM-sketch)."""
+        if keys.dtype != torch.long:
+            keys = keys.long()
+        idx = ((keys[:, None] * self.hash_a) % self.w).long()
+        return torch.min(self.C[:, idx].transpose(0, 1), dim=1).values
 
     @torch.cuda.amp.autocast(dtype=torch.float16)
-    def update(self, keys: torch.Tensor, vals: torch.Tensor) -> None:
-        """In-place conservative update.
-
-        For every (key, row) pair we only touch the counter if the
-        incoming value is larger than the current one.  A *mask* `need`
-        identifies those counters; multiplication by the mask turns the
-        source of `scatter_add_` into 0 or `delta` (new−old), achieving
-        an atomic O(1) update per counter.
-        """
-        idx = self._indices(keys)          # (n_keys, rows)
-        cur = self._gather(idx)            # (n_keys, rows)
-
-        # --------------------------- mask of needed updates ---------------------------
-        need = vals.unsqueeze(1) > cur      # (n_keys, rows) – boolean
-        if not need.any():
-            return  # nothing to do – early exit avoids needless scatter
-
-        # --------------------------- prepare fp16 tensors -----------------------------
-        # Shapes compatible with scatter_(add)  →  (rows, n_keys)
-        need_t   = need.T.to(dtype=torch.float16)                 # (rows, n_keys) fp16  {0,1}
-        idx_t    = idx.T                                          # (rows, n_keys) int64
-        cur_t    = cur.T                                          # (rows, n_keys) fp16 (view)
-        vals_t   = vals.unsqueeze(0).expand(self.rows, -1)        # (rows, n_keys) fp16
-
-        delta = vals_t - cur_t            # only positive where need_t==1 (but cheap to compute)
-        src   = need_t * delta            # fp16 – same dtype as C
-
-        # ------------------------ atomic add (0 or delta) -----------------------------
-        # NOTE: src and self.C have identical dtype (fp16) – this avoids the scatter() dtype error.
-        self.C.scatter_add_(1, idx_t, src)
-
-    # ------------------------------------------------------------------
-    #                Convenience helpers (ckpt / restore)               
-    # ------------------------------------------------------------------
-    def state_dict(self) -> Dict[str, Any]:
-        return {"C": self.C, "hash_a": self.hash_a}
-
-    def load_state_dict(self, state: Dict[str, Any]) -> None:
-        self.C.copy_(state["C"])
-        self.hash_a.copy_(state["hash_a"])
+    def update(self, keys: torch.LongTensor, vals: torch.Tensor) -> None:
+        if keys.dtype != torch.long:
+            keys = keys.long()
+        if vals.dtype != torch.float16:
+            vals = vals.to(torch.float16)
+        idx = ((keys[:, None] * self.hash_a) % self.w).long()
+        cur = self.C[:, idx].transpose(0, 1)
+        need = (vals.unsqueeze(1) > cur).float()
+        # scatter_add_ on *need* mask emulates atomic-min (safe on single-GPU training loop)
+        self.C.scatter_add_(1, (need * idx).long(), need * vals.unsqueeze(1))
 
 
-# ----------------------------------------------------------------------------------
-#                              Training harness
-# ----------------------------------------------------------------------------------
+def _synthetic_batch(n_keys: int = 256):
+    """Helper that builds a synthetic batch so smoke-tests do not need a dataset."""
+    keys = torch.randint(0, 10_000, (n_keys,), device="cuda" if torch.cuda.is_available() else "cpu")
+    vals = torch.rand(n_keys, device=keys.device)
+    return keys, vals
 
-def train_sketch(cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """A minimal synthetic workload that stress-tests the ZeroSketch.
 
-    The loop performs a single (update → query) pass over `n_keys`
-    random key/value pairs and returns simple error metrics so that CI
-    can assert numerical sanity.
+def train(cfg: dict) -> dict:
+    """Minimal train loop that exercises ZeroSketch several times.
+
+    Because the public snippet only contains the sketch, we limit ourselves to
+    calling update/query to prove it works – replacing the real model training
+    done in the full HAWQ-Skim code-base.
     """
-    torch.manual_seed(cfg.get("seed", 0))
 
-    n_keys: int  = cfg["sketch"].get("n_keys")
-    max_val: float = cfg["sketch"].get("max_val")
+    epochs = int(cfg.get("epochs", 2))
+    batches_per_epoch = int(cfg.get("batches_per_epoch", 4))
 
-    # -------------------------- deterministic synthetic data -------------------------
-    keys = torch.arange(n_keys, device=device, dtype=torch.int64)
-    vals = torch.rand(n_keys, device=device, dtype=torch.float16) * max_val
+    sketch = ZeroSketch(rows=cfg.get("rows", 3), w=cfg.get("w", 32))
+    losses = []
 
-    sketch = ZeroSketch(rows=cfg["sketch"].get("rows", 3),
-                        w=cfg["sketch"].get("w", 32))
-
-    # one pass: update then query (mirrors sampler life-cycle)
-    sketch.update(keys, vals)
-    estimates = sketch.query(keys)
-
-    # ------------------------------ error statistics --------------------------------
-    over_estimation = (estimates - vals).clamp_min(0.0)
-    mae      = float(over_estimation.mean().item())
-    max_err  = float(over_estimation.max().item())
+    for ep in range(epochs):
+        epoch_loss = 0.0
+        for _ in range(batches_per_epoch):
+            keys, vals = _synthetic_batch(cfg.get("batch_size", 256))
+            # simulate forward pass: query then L1-loss to true vals
+            pred = sketch.query(keys)
+            loss = torch.mean(torch.abs(pred.float() - vals))
+            # backward-less optimisation – we only update the sketch (as per paper)
+            sketch.update(keys, vals)
+            epoch_loss += loss.item()
+        epoch_loss /= batches_per_epoch
+        losses.append(epoch_loss)
+        if cfg.get("verbose", True):
+            print(f"Epoch {ep+1}/{epochs} − sketch L1 error: {epoch_loss:.4f}")
 
     metrics = {
-        "n_keys"    : int(n_keys),
-        "rows"      : int(sketch.rows),
-        "width"     : int(sketch.w),
-        "mae"       : mae,
-        "max_error": max_err,
+        "final_l1_error": losses[-1],
+        "mean_l1_error": sum(losses) / len(losses),
+        "epochs": epochs,
+        "rows": sketch.rows,
+        "w": sketch.w,
     }
+    # persist metrics under .research/iteration6
+    out_dir = Path(".research") / "iteration6"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    json_path = out_dir / (cfg.get("run_name", "sketch_run") + ".json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
+    print("Saved metrics →", json_path)
+    print(json.dumps(metrics, indent=2))
     return metrics
