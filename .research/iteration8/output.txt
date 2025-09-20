@@ -1,0 +1,22 @@
+=== [PHASE 2/2] Full experiment start Sat Sep 20 03:33:55 PM UTC 2025 ===
+preprocess.load_data – no-op (dataset handled in full code-base)
+Epoch 1/5 – sketch L1 error: 0.4508
+Epoch 2/5 – sketch L1 error: 0.4949
+Epoch 3/5 – sketch L1 error: 0.5018
+Epoch 4/5 – sketch L1 error: 0.5021
+Epoch 5/5 – sketch L1 error: 0.4983
+Saved metrics → .research/iteration8/full_zero_sketch.json
+{
+  "final_l1_error": 0.4982506539672613,
+  "mean_l1_error": 0.48957257717847824,
+  "epochs": 5,
+  "rows": 3,
+  "w": 32
+}
+Evaluation report → .research/iteration8/full_zero_sketch_eval.json
+{
+  "status": "FAIL",
+  "threshold": 0.25,
+  "final_l1_error": 0.4982506539672613
+}
+=== [PHASE 2/2] Full experiment end Sat Sep 20 03:33:58 PM UTC 2025 ===

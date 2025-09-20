@@ -1,0 +1,4 @@
+/home/toma/pt80-1-a-27/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/_subclasses/functional_tensor.py:279: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:81.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+/home/toma/pt80-1-a-27/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py:58: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  @torch.cuda.amp.autocast(dtype=torch.float16)
