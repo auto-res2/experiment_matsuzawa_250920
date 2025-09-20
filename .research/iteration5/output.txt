@@ -1,0 +1,19 @@
+=== [PHASE 2/2] Full experiment start Sat Sep 20 03:19:56 PM UTC 2025 ===
+
+===== ZeroSketch Evaluation =====
+      n_keys: 10000000
+        rows: 4
+       width: 64
+         mae: 2048.0
+   max_error: 2048.0
+================================
+
+Persisted metrics:
+{
+  "n_keys": 10000000,
+  "rows": 4,
+  "width": 64,
+  "mae": 2048.0,
+  "max_error": 2048.0
+}
+=== [PHASE 2/2] Full experiment end Sat Sep 20 03:19:58 PM UTC 2025 ===
