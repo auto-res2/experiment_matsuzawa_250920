@@ -1,0 +1,15 @@
+seed_list: [7]
+moment_bin_size: 64
+alpha0: 0.15
+prior_var: 0.05
+tau: 3.0       # adversary-detector threshold
+batch_size: 32
+num_batches: 3 # each stream truncated to three mini-batches
+datasets:
+  - cifar10c
+  - cifar100c
+models:
+  - name: resnet26d
+    quantized: false
+  - name: resnet26d
+    quantized: true

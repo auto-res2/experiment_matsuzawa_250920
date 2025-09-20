@@ -1,0 +1,29 @@
+seed_list: [7, 13, 31]
+moment_bin_size: 64
+alpha0: 0.15
+prior_var: 0.05
+tau: 3.0
+batch_size: 256
+num_batches: null   # null = stream entire test split
+datasets:
+  - cifar10c
+  - cifar100c
+  - imagenetc
+  - imagenetvidc
+  - domainnet_painting
+  - domainnet_sketch
+  - domainnet_real
+  - domainnet_clipart
+  - lasotc
+  - realblurc
+models:
+  - name: resnet26d
+    quantized: false          # source baseline FP16
+  - name: resnet26d
+    quantized: true           # source baseline INT8
+  - name: convnext_tiny
+    quantized: true
+  - name: vit_tiny_patch16_224
+    quantized: true
+  - name: mobilevit_xs
+    quantized: true
