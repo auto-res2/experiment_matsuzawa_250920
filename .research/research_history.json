@@ -6,5 +6,82 @@
     "online domain adaptation acceleration",
     "batchnorm adaptation speedup",
     "meta-learning rapid adaptation"
+  ],
+  "research_study_list": [
+    {
+      "title": "Evaluation of Test-Time Adaptation Under Computational Time Constraints"
+    },
+    {
+      "title": "Leveraging Proxy of Training Data for Test-Time Adaptation"
+    },
+    {
+      "title": "Towards Stable Test-time Adaptation in Dynamic Wild World"
+    },
+    {
+      "title": "Towards Stable Test-time Adaptation in Dynamic Wild World"
+    },
+    {
+      "title": "Robust Test-Time Adaptation in Dynamic Scenarios"
+    },
+    {
+      "title": "Accelerating SGD with momentum for over-parameterized learning"
+    },
+    {
+      "title": "Predicting Training Time Without Training "
+    },
+    {
+      "title": "Approaching Quartic Convergence Rates for Quasi-Stochastic Approximation with Application to Gradient-Free Optimization"
+    },
+    {
+      "title": "Approaching Quartic Convergence Rates for Quasi-Stochastic Approximation with Application to Gradient-Free Optimization"
+    },
+    {
+      "title": "How Deep Do We Need: Accelerating Training and Inference of Neural ODEs via Control Perspective"
+    },
+    {
+      "title": "Learning to Adapt to Evolving Domains"
+    },
+    {
+      "title": "Test-Time Adaptation for Depth Completion"
+    },
+    {
+      "title": "Evaluation of Test-Time Adaptation Under Computational Time Constraints"
+    },
+    {
+      "title": "AnyDA: Anytime Domain Adaptation"
+    },
+    {
+      "title": "Stationary Latent Weight Inference for Unreliable Observations from Online Test-Time Adaptation"
+    },
+    {
+      "title": "TTN: A Domain-Shift Aware Batch Normalization in Test-Time Adaptation"
+    },
+    {
+      "title": "Towards Stabilizing Batch Statistics in Backward Propagation of Batch Normalization"
+    },
+    {
+      "title": "Four Things Everyone Should Know to Improve Batch Normalization"
+    },
+    {
+      "title": "Deconstructing the Regularization of BatchNorm"
+    },
+    {
+      "title": "MetaNorm: Learning to Normalize Few-Shot Batches Across Domains"
+    },
+    {
+      "title": "Meta-Learning with Warped Gradient Descent"
+    },
+    {
+      "title": "Bayesian Meta Sampling for Fast Uncertainty Adaptation"
+    },
+    {
+      "title": "Learning to Adapt to Evolving Domains"
+    },
+    {
+      "title": "Online Meta-Learning via Learning with Layer-Distributed Memory"
+    },
+    {
+      "title": "Look-ahead Meta Learning for Continual Learning"
+    }
   ]
 }
