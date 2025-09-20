@@ -2,8 +2,11 @@ from typing import Dict, Any
 
 
 def load_config(run_cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """In a larger code-base this would handle dataset download / graph prep.
-    For the refactored sketch-only test we simply pass the parsed YAML config
-    through so that other modules receive a uniform Dict[str, Any]."""
+    """Identity passthrough – placeholder for real data preprocessing.
+    In larger experiments this module would handle dataset download and
+    graph preparation.  For the current sketch benchmark we simply
+    forward the parsed YAML so that all downstream code receives a
+    uniform `Dict[str, Any]`.
+    """
 
     return run_cfg

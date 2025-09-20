@@ -13,7 +13,7 @@ from .evaluate import evaluate_sketch
 # ---------------------------------------------------------------------------
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config")
 SMOKE_CFG = os.path.join(CONFIG_DIR, "smoke_test.yaml")
-FULL_CFG = os.path.join(CONFIG_DIR, "full_experiment.yaml")
+FULL_CFG  = os.path.join(CONFIG_DIR, "full_experiment.yaml")
 
 
 def _parse_cli() -> argparse.Namespace:

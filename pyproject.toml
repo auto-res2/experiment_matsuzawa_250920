@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 # Strict list to keep the runtime lean and deterministic.
+# PyYAML is needed for config parsing; torch for the sketch itself.
 dependencies = [
   "torch>=1.9.0",
   "PyYAML>=6.0",
