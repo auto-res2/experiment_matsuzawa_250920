@@ -1,1 +1,16 @@
-# Please list the required python packages.
+[project]
+name = "eco_gat"
+version = "0.1.0"
+description = "ECO-GAT research prototype – energy-constrained sparse + quantised GAT"
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[tool.pdm]
+dependencies = [
+    "torch>=2.1.0",
+    "torch-geometric>=2.4.0",
+    "pyyaml>=6.0",
+    "scipy>=1.10.0"
+]

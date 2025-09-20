@@ -1,0 +1,21 @@
+run_name: full_run
+
+# Dataset (memory-heavy – ensure A100-80GB)
+dataset: Reddit
+data_root: ./data
+
+model:
+  hidden: 128
+  num_layers: 3
+  num_classes: 41
+  heads: 8
+
+solver:
+  flop_budget: 0.15   # 15 % backward FLOPs
+  q_err_budget: 0.02
+
+optim:
+  lr: 0.002
+  weight_decay: 0.0005
+  epochs: 50
+  log_every: 5
