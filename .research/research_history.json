@@ -548,7 +548,456 @@
     }
   ],
   "new_method": {
-    "method": "Open Problems: 1. Current one-shot TTA modules either (a) rely on hand-picked robust statistics (µ, σ, med, …) whose sufficiency is unproven for complex, multi-modal shifts or (b) ignore the causal pathway that generates those statistics, leading to sub-optimal or even misleading adaptations.\n2. Existing hyper-networks predict layer parameters independently; they cannot propagate causal evidence along the computation graph (e.g. if early-layer shift is an artefact of late-layer corruption such as colour-jitter vs. blur).\n3. Robustness to malicious samples is handled by hard-coded robust estimators yet attacks can still craft adversarial medians (≥50 % poisoning) or exploit correlation across channels rather than across samples.\n4. Transformer backbones frequently store activations in INT8 / mixed precision on edge devices; most proposed statistics and attention blocks silently up-cast to FP32 – latency and energy gains documented for CNNs vanish on real hardware.\n5. No existing TTA method offers a theoretical bound on the distance between the predicted parameters and the (unknown) optimal ones under arbitrary distribution shift + bounded adversarial corruption.\nMethods: We propose CASP ( Causal Adaptive Statistic Propagation ), a generalisation of RAINCOAT with three key novelties:\nA. Graph-Structured Robust Moment Estimation  →  We build a directed acyclic graph G whose nodes are normalisation layers; edges follow the forward data flow.  For every node ℓ we estimate a *vector of robust moments* mℓ = ⟨q10,q25,µ,q75,q90,skew⟩ via the Greenwald-Khanna quantile sketch in O(log N) memory.  Moments are iteratively *propagated* upstream/downstream using a differentiable message-passing layer that learns how much information to borrow from parents/children – allowing early layers to piggy-back on deep-layer evidence and vice-versa.\nB. Causal Hyper-Network with Uncertainty Certificates  →  All node embeddings (mℓ ⊕ eℓ) are fed into a Bayesian linear attention Transformer that outputs not only Δγ/Δβ (or Δg/Δb) but also a *variance estimate* σ²ℓ.  At test time we perform a single closed-form update  θ̂ℓ = θℓ + Σ_prior(Σ_prior+σ²ℓ)⁻¹ Δℓ ensuring small, theoretically bounded deviation when uncertainty is high – yielding the first PAC-style guarantee for one-shot TTA under bounded poisoning rate ≤ε.\nC. Low-Precision Friendly Implementation  →  All quantile sketches run in INT8 arithmetic; the attention block is replaced by Q-K-V linear projections quantised by AITemplate kernels.  The entire CASP head adds <4 KB SRAM and <0.15 ms on Jetson Orin Nano (INT8 path) while falling back to FP16 on desktop GPUs.\nExtra: an *adversary detector* uses Mahalanobis distance on the propagated moment graph; if distance>τ we skip adaptation, preventing >50 % breakdown attacks.\nExperimental Setup: Datasets: CIFAR-10/100-C, ImageNet-C, ImageNet-VID-C, DomainNet-126, LaSOT-C, and the new RealBlur-C (synthetic + real motion blur with temporal drift).  \nArchitectures: ResNet-26 BN, ConvNeXt-T GN, ViT-Tiny LN, and MobileViT-XS INT8.\nBaselines: Source, BN, MedBN, UnMix-TNS, TENT-1/10, CoTTA, RAINCOAT, RAINCOAT+MedBN.\nProtocols: (i) non-i.i.d. Dirichlet δ=0.05; (ii) correlated video stream; (iii) adversarial poisoning mDIA with ε∈{0.2,0.4,0.6}.  \nMetrics: top-1 error, ASR, negative-log PAC bound (ours), INT8 latency & energy via NV-PMU.  \nAblations: remove graph propagation, replace quantile sketch with plain median, FP32 vs. INT8 path.\nExperimental Code: # sketch of quantile sketch + message pass\nclass QSketch(nn.Module):\n    def __init__(self, ch, k=64):\n        super().__init__(); self.k=k; self.register_buffer('buf',torch.zeros(ch,k,dtype=torch.int8))\n    def update(self,x):\n        q=torch.quantile(x.float(),torch.tensor([.1,.25,.5,.75,.9]),dim=(0,2,3))\n        self.buf=(0.9*self.buf.float()+0.1*q.unsqueeze(-1)).to(torch.int8)\n    def moment(self):\n        return self.buf.float().mean(-1)\nclass PropLayer(nn.Module):\n    def __init__(self, d):\n        super().__init__(); self.alpha=nn.Parameter(torch.zeros(1))\n    def forward(self,m_parent,m_child):\n        return torch.tanh(self.alpha)*m_parent + (1-torch.tanh(self.alpha))*m_child\n# in the hook per layer\nsketches[l].update(feat)\n# message passing (1 it.)\nfor l in topological[::-1]:\n    if parents[l]: m[l]=prop(m[l], torch.stack([m[p] for p in parents[l]]).mean(0))\nExpected Result: • CIFAR100-C error drops from 21.0 % (RAINCOAT) → 19.2 %; same latency 0.88 ms (INT8).\n• Under ε=0.4 malicious poisoning ASR ≤12 % (vs. 15 % for RAINCOAT, 28 % for MedBN).\n• PAC bound predicts ≤2.3 % additional error with 95 % confidence – empirically 1.9 %.\n• On MobileViT-XS INT8 ImageNet-C mCE improves by 3.5 % over RAINCOAT with 35 % less energy.\n• Ablations: removing graph propagation +1.8 % error; replacing Bayesian update +1.1 %; FP32 path adds 0.25 ms but same accuracy.\nExpected Conclusion: CASP shows that modelling the *causal graph of robust statistics* and propagating uncertainty allows principled, provably safe one-shot TTA that is both faster and more robust than state-of-the-art RAINCOAT.  Its INT8 implementation makes it immediately deployable on low-power edge devices while the PAC guarantee provides the first formal reliability bound in test-time adaptation."
+    "method": "Open Problems: 1. Current one-shot TTA modules either (a) rely on hand-picked robust statistics (µ, σ, med, …) whose sufficiency is unproven for complex, multi-modal shifts or (b) ignore the causal pathway that generates those statistics, leading to sub-optimal or even misleading adaptations.\n2. Existing hyper-networks predict layer parameters independently; they cannot propagate causal evidence along the computation graph (e.g. if early-layer shift is an artefact of late-layer corruption such as colour-jitter vs. blur).\n3. Robustness to malicious samples is handled by hard-coded robust estimators yet attacks can still craft adversarial medians (≥50 % poisoning) or exploit correlation across channels rather than across samples.\n4. Transformer backbones frequently store activations in INT8 / mixed precision on edge devices; most proposed statistics and attention blocks silently up-cast to FP32 – latency and energy gains documented for CNNs vanish on real hardware.\n5. No existing TTA method offers a theoretical bound on the distance between the predicted parameters and the (unknown) optimal ones under arbitrary distribution shift + bounded adversarial corruption.\nMethods: We propose CASP ( Causal Adaptive Statistic Propagation ), a generalisation of RAINCOAT with three key novelties:\nA. Graph-Structured Robust Moment Estimation  →  We build a directed acyclic graph G whose nodes are normalisation layers; edges follow the forward data flow.  For every node ℓ we estimate a *vector of robust moments* mℓ = ⟨q10,q25,µ,q75,q90,skew⟩ via the Greenwald-Khanna quantile sketch in O(log N) memory.  Moments are iteratively *propagated* upstream/downstream using a differentiable message-passing layer that learns how much information to borrow from parents/children – allowing early layers to piggy-back on deep-layer evidence and vice-versa.\nB. Causal Hyper-Network with Uncertainty Certificates  →  All node embeddings (mℓ ⊕ eℓ) are fed into a Bayesian linear attention Transformer that outputs not only Δγ/Δβ (or Δg/Δb) but also a *variance estimate* σ²ℓ.  At test time we perform a single closed-form update  θ̂ℓ = θℓ + Σ_prior(Σ_prior+σ²ℓ)⁻¹ Δℓ ensuring small, theoretically bounded deviation when uncertainty is high – yielding the first PAC-style guarantee for one-shot TTA under bounded poisoning rate ≤ε.\nC. Low-Precision Friendly Implementation  →  All quantile sketches run in INT8 arithmetic; the attention block is replaced by Q-K-V linear projections quantised by AITemplate kernels.  The entire CASP head adds <4 KB SRAM and <0.15 ms on Jetson Orin Nano (INT8 path) while falling back to FP16 on desktop GPUs.\nExtra: an *adversary detector* uses Mahalanobis distance on the propagated moment graph; if distance>τ we skip adaptation, preventing >50 % breakdown attacks.\nExperimental Setup: Datasets: CIFAR-10/100-C, ImageNet-C, ImageNet-VID-C, DomainNet-126, LaSOT-C, and the new RealBlur-C (synthetic + real motion blur with temporal drift).  \nArchitectures: ResNet-26 BN, ConvNeXt-T GN, ViT-Tiny LN, and MobileViT-XS INT8.\nBaselines: Source, BN, MedBN, UnMix-TNS, TENT-1/10, CoTTA, RAINCOAT, RAINCOAT+MedBN.\nProtocols: (i) non-i.i.d. Dirichlet δ=0.05; (ii) correlated video stream; (iii) adversarial poisoning mDIA with ε∈{0.2,0.4,0.6}.  \nMetrics: top-1 error, ASR, negative-log PAC bound (ours), INT8 latency & energy via NV-PMU.  \nAblations: remove graph propagation, replace quantile sketch with plain median, FP32 vs. INT8 path.\nExperimental Code: # sketch of quantile sketch + message pass\nclass QSketch(nn.Module):\n    def __init__(self, ch, k=64):\n        super().__init__(); self.k=k; self.register_buffer('buf',torch.zeros(ch,k,dtype=torch.int8))\n    def update(self,x):\n        q=torch.quantile(x.float(),torch.tensor([.1,.25,.5,.75,.9]),dim=(0,2,3))\n        self.buf=(0.9*self.buf.float()+0.1*q.unsqueeze(-1)).to(torch.int8)\n    def moment(self):\n        return self.buf.float().mean(-1)\nclass PropLayer(nn.Module):\n    def __init__(self, d):\n        super().__init__(); self.alpha=nn.Parameter(torch.zeros(1))\n    def forward(self,m_parent,m_child):\n        return torch.tanh(self.alpha)*m_parent + (1-torch.tanh(self.alpha))*m_child\n# in the hook per layer\nsketches[l].update(feat)\n# message passing (1 it.)\nfor l in topological[::-1]:\n    if parents[l]: m[l]=prop(m[l], torch.stack([m[p] for p in parents[l]]).mean(0))\nExpected Result: • CIFAR100-C error drops from 21.0 % (RAINCOAT) → 19.2 %; same latency 0.88 ms (INT8).\n• Under ε=0.4 malicious poisoning ASR ≤12 % (vs. 15 % for RAINCOAT, 28 % for MedBN).\n• PAC bound predicts ≤2.3 % additional error with 95 % confidence – empirically 1.9 %.\n• On MobileViT-XS INT8 ImageNet-C mCE improves by 3.5 % over RAINCOAT with 35 % less energy.\n• Ablations: removing graph propagation +1.8 % error; replacing Bayesian update +1.1 %; FP32 path adds 0.25 ms but same accuracy.\nExpected Conclusion: CASP shows that modelling the *causal graph of robust statistics* and propagating uncertainty allows principled, provably safe one-shot TTA that is both faster and more robust than state-of-the-art RAINCOAT.  Its INT8 implementation makes it immediately deployable on low-power edge devices while the PAC guarantee provides the first formal reliability bound in test-time adaptation.",
+    "experimental_design": {
+      "experiment_strategy": "====================\nExperiment 1: Large-Scale Corruption & Quantisation Benchmark\n------------------------------------------------------------\nGoal: Show that CASP simultaneously improves accuracy, energy and latency under diverse natural corruptions while running fully in INT8.\n\nProcedure:\n1. Architectures: ResNet-26-BN, ConvNeXt-T-GN, ViT-Tiny-LN, MobileViT-XS-INT8.\n2. Datasets/Streams (≈250 k images): CIFAR-C, ImageNet-C, ImageNet-VID-C, RealBlur-C, DomainNet-126 (Dirichlet δ = 0.05 non-i.i.d batches).\n3. Runtime modes per model:\n   a. Source (no TTA, INT8 inference path).\n   b. RAINCOAT (FP32 statistics).\n   c. RAINCOAT+MedBN (mixed precision).\n   d. CASP-FP16 (ablation) and CASP-INT8 (full method).\n4. Measure per 256-image chunk on the A100:\n   • top-1 error / mCE\n   • wall-clock latency & energy via nv-pmu\n   • memory footprint of adaptation head\n5. Repeat 3 seeds; report means and 95 % CI.\n\nExpected Demonstration:\n• CASP-INT8 cuts error by 5–7 % (absolute) vs. best baseline on all backbones while reducing adaptation energy ≥30 %.\n• Identical accuracy between CASP-INT8 and CASP-FP16 (±0.1 %), proving low-precision design.\n• Ablations (no graph propagation / no Bayesian update) each degrade accuracy by ≥1.5 %, highlighting both components.\n\nWhat it shows: CASP delivers state-of-the-art corruption robustness without sacrificing the latency/energy gains that motivated INT8 deployment, validating design goals A & C.\n\n====================\nExperiment 2: Causal Shift Localisation Stress-Test\n--------------------------------------------------\nGoal: Verify that graph-structured message passing correctly attributes shifts to their causal layer, unlike independent hyper-networks.\n\nProcedure:\n1. Start from a clean, frozen ResNet-26 trained on ImageNet.\n2. Generate two synthetic test streams (10 k images each):\n   • Early-Layer Shift: apply severe Gaussian blur (σ=5) → mainly perturbs low-frequency features.\n   • Late-Layer Shift: apply random colour-jitter after the penultimate block in feature space (no change to early activations).\n   Both streams include 20 % random clean images to emulate multi-modal mixtures.\n3. Collect per-layer activations from the frozen source model and compute ground-truth mean shift ∥µshift∥₂.\n4. Adapt with\n   a. Independent Hyper-Net (RAINCOAT)\n   b. CASP w/ propagation turned off\n   c. Full CASP\n5. Metrics:\n   • Layer-wise parameter error ∥θ̂ℓ − θ*ℓ∥₂ (θ*ℓ obtained by oracle adaptation using 1000 labelled samples)\n   • End-to-end top-1 accuracy.\n\nExpected Demonstration:\n• For blur stream, CASP concentrates >70 % of total parameter change in the first two stages, matching oracle; baselines distribute updates uniformly → 2× higher parameter error.\n• For colour-jitter stream the converse occurs (largest change in final normalisation layer) and again CASP aligns with oracle.\n• Resulting accuracy: CASP outperforms RAINCOAT by 3–4 % on both streams, while CASP-no-prop loses half the gain—direct evidence that causal message passing (novelty A) enables correct shift attribution.\n\n====================\nExperiment 3: Adversarial Poisoning + PAC-Bound Validation\n---------------------------------------------------------\nGoal: Demonstrate robustness to malicious samples and empirical tightness of the closed-form PAC guarantee.\n\nProcedure:\n1. Dataset: CIFAR-100-C with corruption ‘fog’ (medium level).\n2. Generate streaming batches of 256 images where an attacker replaces an ε-fraction with crafted poisoning following mDIA:\n   ε ∈ {0.0, 0.2, 0.4, 0.6}.\n3. Evaluate methods capable of adaptation under attack:\n   a. MedBN + UnMix-TNS (hard-coded robust estimator)\n   b. RAINCOAT\n   c. CASP (with and without adversary detector)\n4. Record per batch:\n   • Attack Success Rate (ASR: drop in accuracy on clean hold-out set)\n   • Negative-log PAC bound produced by CASP\n   • Whether adversary detector triggered skip-adaptation.\n5. Plot ASR vs. ε as well as empirical error vs. bound percentile.\n\nExpected Demonstration:\n• CASP keeps ASR ≤12 % at ε = 0.4 and ≤25 % at ε = 0.6, beating RAINCOAT (15 % / 38 %) and MedBN (28 % / 52 %).\n• Detector skips adaptation in >90 % of catastrophic batches, limiting worst-case error.\n• 95 % of observed errors lie below the theoretical PAC bound, median gap <0.5 %, confirming correctness of novelty B.\n\nWhat it shows: CASP’s Bayesian update and adversary detector jointly provide quantifiable, certified safety against strong poisoning—solving Open Problems 3 & 5.\n====================",
+      "experiment_details": "====================================================================\nGLOBAL SETTINGS (apply to all experiments unless overridden)\n--------------------------------------------------------------------\nExecution host:\n• 1 × NVIDIA A100-80 GB, CUDA 12.2, PyTorch 2.1.0 + CUDA graph capture.\n• 2 TB system RAM → data pre-cached on a tmpfs RAM-disk to remove I/O noise.\n• Mixed-precision / INT8 handled with NVIDIA TensorRT-LLM and AITemplate back-ends.\n\nRepetitions / random seeds:\n• 3 independent runs with seeds {7, 13, 31}.  All numbers are reported as mean ± 95 % CI (t-distribution, 2-doF).\n• Where a “best-val” selection is required we use the average validation accuracy across the 3 seeds; ties broken by lower latency.\n\nTrain / validation / test split policy:\n• Source-training weights are fixed (provided by our model-zoo).  No fine-tuning is performed during TTA, hence no classical train/val/test split is required.\n• A 5 % random subset of the CLEAN validation set of each benchmark is reserved as a hyper-parameter tuning pool (HP-Pool).  These images are never corrupted and never used for adaptation, only for offline grid-search of the *global* hyper-parameters reported below.\n• All corrupted / shifted / poisoned streams are treated as *test* data and processed strictly online, one batch at a time, without peeking at labels.\n\nShared hyper-parameters (final values after HP-Pool search)\n• Quantile-sketch bin size k = 64\n• Message-passing damping α₀ = 0.15 (initial value, then learned online)\n• Bayesian prior variance Σ_prior = diag(0.05)  (per-layer, scaled by γ/β magnitude)\n• Adversary detector threshold τ = 3.0 (Mahalanobis distance)\nA grid of 3×3×3×4 values was evaluated on HP-Pool; chosen tuple gives best mean accuracy.\n\nLogging / Profiling:\n• ptflops for FLOPs, torch.cuda.Event for wall-clock latency, nv-pmu (NVIDIA power-monitoring unit) sampled at 1 kHz for energy.\n• Memory: max-resident GPU memory from nvidia-smi; CPU RAM via psutil.\n• All statistics logged by Weights & Biases and exported as .csv for reproducibility.\n--------------------------------------------------------------------\n\nEXPERIMENT 1 – Large-Scale Corruption & Quantisation Benchmark\n====================================================================\nGoal\nShow that CASP improves accuracy *and* reduces latency/energy under a wide variety of natural corruptions while running fully in INT8.\n\n1. Models\n   a. ResNet-26-BN (53 M FLOPs / 9.2 M params)\n   b. ConvNeXt-Tiny-GN (1.1 G FLOPs / 28 M params)\n   c. ViT-Tiny-LN (1.26 G FLOPs / 5.7 M params, patch 16)\n   d. MobileViT-XS-INT8 (300 M INT8 FLOPs / 2.3 M params)\n   Baseline heads:  Source (no TTA), RAINCOAT, RAINCOAT+MedBN.\n   CASP variants:  CASP-FP16 (ablation) and CASP-INT8 (full method, quantised).\n\n2. Data sets / streams (≈ 250 k images total)\n   • CIFAR-10-C & CIFAR-100-C (all 15 corruption types × 5 severities) – resized to 32².\n   • ImageNet-C (1.28 M images × 15 × 5) – centre-crop 224².\n   • ImageNet-VID-C (50,000 key-frames) – 220² crop, temporal order preserved.\n   • DomainNet-126 (painting, real, clipart, quickdraw, infograph, sketch) sampled with Dirichlet δ = 0.05 to induce non-i.i.d. batches.\n   • RealBlur-C (new) – 30,000 frames with synthetic+real motion blur and gradual temporal drift.\n\n3. Pre-processing\n   • Per-dataset mean/std normalisation matching the original source training.\n   • INT8 path: images kept in uint8, normalisation postponed to first scale-shift layer which is fused into the quantised conv.\n   • For video streams, frames are fed in arrival order (no shuffling) to respect temporal correlation.\n\n4. Batch & streaming protocol\n   • Online adaptation with sliding batches of 256 images (128 for CIFAR).\n   • After each batch the adaptation head updates statistics; model parameters for the *next* batch are updated once (one-shot TTA).\n\n5. Evaluation metrics\n   Primary:  Top-1 error (%, lower is better) and mean Corruption Error (mCE for ImageNet-C style).\n   Secondary:  Latency (ms / batch), Energy (J / batch), Peak GPU memory (MB), Adaptation head size (KB SRAM), INT8 vs FP16 accuracy gap.\n\n6. Hyper-parameter sensitivity study\n   • α₀ ∈ {0.05, 0.1, 0.15, 0.25}\n   • k ∈ {32, 64, 128}\n   • Σ_prior scaling ∈ {0.01, 0.05, 0.1}\n   A 3-way factorial design is executed *once* on CIFAR-100-C validation set (HP-Pool).  The best tuple above is then *frozen* for all benchmarks.  Results included in appendix A.\n\n7. Robustness checks (inside same run)\n   • Noise-injection: add 1 % uniformly random pixels to 10 % of the batches → observe delta accuracy.\n   • Distribution shift: swap corruption type every 5 batches (fog→glass→blur→…)\n   • INT8 numerical stability: compare CASP-INT8 vs CASP-FP16.\n\n8. Resource measurement\n   FLOPs: computed offline with ptflops *including* adaptation head.\n   Latency / energy: average of 100 batches after 10 warm-up iterations; variance <3 %.\n   Cost: AWS p4d.24xlarge → 1 × A100@3.40 $ / h.  All of Exp-1 (three seeds, four models) = 8.2 h = 27.9 $.\n\n9. Example code snippet\n```\nfrom casp import add_casp_head\nfrom nvbench import Timer, EnergyMeter\nmodel = torchvision.models.resnet26_bn(pretrained=True)\nmodel = add_casp_head(model, int8=True)\ndataloader = get_corruption_stream('imagenet_c', batch_size=256)\nenergy = EnergyMeter(); timer = Timer()\nfor x in dataloader:\n    timer.start(); energy.start()\n    with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=False):\n        y = model(x.cuda(non_blocking=True))\n    timer.stop(); energy.stop()\n    model.casp_update(x)   # one-shot adaptation\nprint('Top-1', accuracy, 'Latency', timer.avg, 'Energy', energy.avg)\n```\n\n10. Expected results report template (populate after runs)\n   • Table 1: error, mCE, latency and energy for each model × method.\n   • Figure 1: energy vs. accuracy Pareto front.  CASP-INT8 expected to dominate.\n--------------------------------------------------------------------\n\nEXPERIMENT 2 – Causal Shift Localisation Stress-Test\n====================================================================\nGoal\nValidate that message-passing allows CASP to *concentrate* parameter changes in the truly shifted layers.\n\n1. Model\n   • Frozen ImageNet ResNet-26-BN (same weights as Exp-1).\n\n2. Data generation (all real images, NO synthetic placeholders)\n   • Sample 10 k clean validation images from ImageNet.\n   • Early-layer shift: apply Gaussian blur σ = 5 in pixel space using OpenCV (cv2.GaussianBlur) → 10 k images.\n   • Late-layer shift: feed clean images, intercept feature map after stage 4, apply colour-jitter (brightness ±0.4, contrast ±0.4, saturation ±0.4) and *re-inject* into forward graph (torch.no_grad hook).  Because the base activations are real, no dummy data is introduced.\n   • Mix 20 % untouched images into each stream, shuffled.\n\n3. Oracle target\n   • Collect 1,000 *labelled* images from each stream, fine-tune affine parameters of *all* BatchNorms for 3 epochs (SGD 1e-2).  The resulting θ* acts as oracle optimum.\n\n4. Compared methods\n   a. Independent Hyper-Net (RAINCOAT)\n   b. CASP-no-prop (propagation layer removed, everything else identical)\n   c. CASP-full\n\n5. Metrics\n   • Layer-wise parameter error:  ‖θ̂ℓ − θ*ℓ‖₂ / ‖θ*ℓ‖₂  (relative)\n   • Causal Concentration Ratio (CCR): fraction of total Δγ variance located in the top-k shifted layers (k = 2 for blur, k = 1 for jitter).\n   • End-to-end top-1 accuracy.\n\n6. Data splitting / repetitions\n   • Each stream processed once per seed (3 runs).\n   • No cross-validation required because streams are purely test-time.\n\n7. Hyper-parameter exploration\n   • Turn propagation strength α dynamically from 0 → 1; log CCR vs α to illustrate causal attribution curve (Fig. 3).\n\n8. Robustness checks\n   • Inject 5 % adversarial FGSM ε=2/255 images mid-stream; verify that detector triggers skip-adapt in >85 % cases without harming CCR.\n\n9. Resource measurement\n   • Same tools as Exp-1.  The entire stress-test <0.3 h GPU time.\n\n10. Example code snippet (late-layer perturbation)\n```\n# inside forward hook of penultimate block\nwith torch.no_grad():\n    feat = apply_color_jitter(feat, b=0.4, c=0.4, s=0.4)\n```\n--------------------------------------------------------------------\n\nEXPERIMENT 3 – Adversarial Poisoning + PAC-Bound Validation\n====================================================================\nGoal\nShow CASP’s certified robustness under mDIA poisoning and validate empirical tightness of its PAC bound.\n\n1. Model / dataset\n   • ResNet-26-BN on CIFAR-100-C corruption ‘fog’, severity 3.\n\n2. Streaming protocol\n   • Online batches of 256 images.  The attacker *replaces* an ε-fraction of each batch with adversarially crafted inputs using mDIA (white-box, 20 pgd steps, ℓ∞ = 8/255).\n   • ε ∈ {0.0, 0.2, 0.4, 0.6}.  Each ε tested on a fresh, non-overlapping 10 k-image stream.\n\n3. Methods compared\n   a. MedBN + UnMix-TNS\n   b. RAINCOAT\n   c. CASP (w/ detector)\n   d. CASP-no-detector (ablation)\n\n4. Metrics\n   Primary:\n     • Attack-Success-Rate (ASR): acc_clean − acc_poisoned.\n   Secondary:\n     • Negative-log PAC bound (lower better) vs. empirical error.\n     • Skip ratio (fraction of batches where detector vetoes adaptation).\n\n5. Evaluation protocol\n   • For each ε, run 3 seeds.\n   • Plot ASR vs ε (Fig. 4).\n   • For CASP, bucket batches by PAC bound percentile and plot calibrated reliability diagram (Fig. 5).\n\n6. Hyper-parameter study\n   • Vary detector threshold τ ∈ {2.0, 2.5, 3.0, 3.5}.  Measure AUROC for detecting poisoned batches; choose τ = 3.0 by maximising Youden J on HP-Pool (clean only) augmented with synthetic 50 % poisoned batches (generated offline, not used elsewhere).\n\n7. Robustness to unseen attacks\n   • Repeat ε = 0.4 using AutoAttack (AA-standard) on 2 k images – single seed due to cost.\n\n8. Resource / cost\n   • PGD crafting executed on second A100 stream to hide latency from adaptation wall-clock; energy measured cumulatively for inference only.\n\n9. Example code: PAC bound\n```\n# theta_prior, theta_delta, sigma2 from hyper-net\nposterior_var = (sigma2 * SIG_PRIOR)/(sigma2 + SIG_PRIOR)\nkl = (theta_delta**2 / (sigma2 + SIG_PRIOR)).sum()/2\nbound = np.sqrt((kl + np.log(2*np.sqrt(N)/delta)) / (2*(N-1)))  # Catoni\n```\n--------------------------------------------------------------------\n\nCOMMON BASELINE IMPLEMENTATION FOOTNOTES\n--------------------------------------------------------------------\n¹ RAINCOAT official repo uses FP32 statistics even when the backbone is quantised.  For fairness we re-implement a mixed-precision path where the forward is INT8 but the stats are accumulated in FP32; latency measured includes up-cast / down-cast.\n² MedBN + UnMix-TNS shipped with ε=0.1 clipping by default; we sweep ε ∈ {0.05,0.1,0.2} on HP-Pool and report the best setting (0.1).\n³ All methods receive identical frozen source weights and identical corruption streams (random seed controlled); differences stem only from adaptation heads.\n--------------------------------------------------------------------\n\nOUTPUT ARTEFACTS\n--------------------------------------------------------------------\n• Raw logs (.jsonl) and scripts (.sh) for each experiment.\n• Model checkpoints after adaptation (first 1,000 batches) for reproducibility.\n• Jupyter notebooks generating all plots in the paper.\n--------------------------------------------------------------------\n\nEXPECTED TIME-LINE\n--------------------------------------------------------------------\nExp-1  : 8.2 GPU-hours (batching four models in parallel via DDP + CUDA Graph)\nExp-2  : 0.3 GPU-hours\nExp-3  : 1.7 GPU-hours (including AA-standard)\nTotal  : 10.2 GPU-hours  → fits easily into a single A100 day-budget.\n====================================================================",
+      "expected_models": [
+        "ResNet-26-BN",
+        "ConvNeXt-Tiny-GN",
+        "ViT-Tiny-LN",
+        "MobileViT-XS-INT8"
+      ],
+      "expected_datasets": [
+        "CIFAR-10-C",
+        "CIFAR-100-C",
+        "ImageNet-C",
+        "ImageNet-VID-C",
+        "DomainNet-126",
+        "RealBlur-C",
+        "ImageNet (clean validation)",
+        "CIFAR-100 (clean validation)"
+      ],
+      "external_resources": {
+        "hugging_face": {
+          "models": [],
+          "datasets": [
+            {
+              "id": "robro/cifar10-c-parquet",
+              "author": "robro",
+              "sha": "19c813b71fc13aa6cb76e97cb036c768df69cf3e",
+              "created_at": "2025-09-10T19:53:55+00:00",
+              "last_modified": "2025-09-10T20:39:09+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 137,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data-00000-of-00005.arrow"
+                },
+                {
+                  "rfilename": "data-00001-of-00005.arrow"
+                },
+                {
+                  "rfilename": "data-00002-of-00005.arrow"
+                },
+                {
+                  "rfilename": "data-00003-of-00005.arrow"
+                },
+                {
+                  "rfilename": "data-00004-of-00005.arrow"
+                },
+                {
+                  "rfilename": "dataset_info.json"
+                },
+                {
+                  "rfilename": "state.json"
+                }
+              ],
+              "tags": [
+                "size_categories:100K<n<1M",
+                "format:arrow",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:mlcroissant",
+                "arxiv:1903.12261",
+                "region:us"
+              ],
+              "readme": "---\n# For reference on dataset card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/datasetcard.md?plain=1\n# Doc / guide: https://huggingface.co/docs/hub/datasets-cards\n{}\n---\n\n# Dataset Card for CIFAR10-C\n\n<!-- Provide a quick summary of the dataset. -->\n\nThis dataset is simply an update of the original dataset into the parquet format which should work with the current (circa 2025) huggingface dataset library\n\n## Dataset Details\n\n### Dataset Description\n\n<!-- Provide a longer summary of what this dataset is. -->\nThe CIFAR-10-C dataset is an extension of CIFAR-10 designed to evaluate model robustness to common corruptions. It consists of 950,000 images derived from the original CIFAR-10 test set (10,000 images) by applying 19 different corruption types at 5 severity levels. The corruptions include noise, blur, weather effects, and digital distortions. This dataset is widely used for benchmarking robustness in image classification tasks.\n\n### Dataset Sources\n\n<!-- Provide the basic links for the dataset. -->\n\n- **Homepage:** https://github.com/hendrycks/robustness\n- **Paper:** Hendrycks, D., & Dietterich, T. (2019). Benchmarking neural network robustness to common corruptions and perturbations. arXiv preprint arXiv:1903.12261.\n\n## Dataset Structure\n\n<!-- This section provides a description of the dataset fields, and additional information about the dataset structure such as criteria used to create the splits, relationships between data points, etc. -->\n\nEach sample in the dataset contains:\n\n- **image**: A 32×32 RGB image in PNG format\n\n- **label**: An integer between 0 and 9, representing the class\n\n- **corruption_name**: The name of the applied corruption\n\n- **corruption_level**: An integer between 1 and 5 indicating severity\n\n\nTotal images: 950,000\n\nClasses: 10 (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck)\n\nCorruptions: 19 types (e.g., Gaussian noise, motion blur, contrast, fog, frost, elastic transform, pixelate, JPEG compression, etc.)\n\nSeverity Levels: 5 (ranging from least to most severe)\n\nSplits:\n\n- **Train**: 950,000 images\n\nImage specs: PNG format, 32×32 pixels, RGB\n\n## Example Usage\nBelow is a quick example of how to load this dataset via the Hugging Face Datasets library.\n\n```python\nfrom datasets import load_dataset\n\n# Load the dataset\ndataset = load_dataset(\"robro/cifar10-c-parquet\", split=\"train\", trust_remote_code=False)\nclasses = [\"airplane\",\"automobile\",\"bird\",\"cat\",\"deer\",\"dog\",\"frog\",\"horse\",\"ship\",\"truck\",]\n\n# Access a sample from the dataset\nexample = dataset[0]\nimage = example[\"image\"]\nlabel = example[\"label\"]\n\nimage.show()  # Display the image\nprint(f\"Label: {classes[label]}\")\n```\n\n## Citation\n\n<!-- If there is a paper or blog post introducing the dataset, the APA and Bibtex information for that should go in this section. -->\n\n**BibTeX:**\n\n```bibtex\n@article{hendrycks2019benchmarking,\n  title={Benchmarking neural network robustness to common corruptions and perturbations},\n  author={Hendrycks, Dan and Dietterich, Thomas},\n  journal={arXiv preprint arXiv:1903.12261},\n  year={2019}\n}\n```\n",
+              "extracted_code": "from datasets import load_dataset\n\ndataset = load_dataset(\"robro/cifar10-c-parquet\", split=\"train\", trust_remote_code=False)\nclasses = [\n    \"airplane\",\n    \"automobile\",\n    \"bird\",\n    \"cat\",\n    \"deer\",\n    \"dog\",\n    \"frog\",\n    \"horse\",\n    \"ship\",\n    \"truck\",\n]\n\nexample = dataset[0]\nimage = example[\"image\"]\nlabel = example[\"label\"]\n\nimage.show()\nprint(f\"Label: {classes[label]}\")"
+            },
+            {
+              "id": "randall-lab/cifar100-c",
+              "author": "randall-lab",
+              "sha": "ebc72cd7f49cb642fefe8b328a60dfb5de7ae463",
+              "created_at": "2025-02-23T18:29:14+00:00",
+              "last_modified": "2025-02-23T18:58:04+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 66,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "cifar100-c.py"
+                }
+              ],
+              "tags": [
+                "arxiv:1903.12261",
+                "region:us"
+              ],
+              "readme": "---\n# For reference on dataset card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/datasetcard.md?plain=1\n# Doc / guide: https://huggingface.co/docs/hub/datasets-cards\n{}\n---\n\n# Dataset Card for CIFAR-100-C\n\n<!-- Provide a quick summary of the dataset. -->\n\n## Dataset Details\n\n### Dataset Description\n\n<!-- Provide a longer summary of what this dataset is. -->\nThe CIFAR-100-C dataset is an extension of CIFAR-100 designed to evaluate model robustness to common corruptions. It consists of 950,000 images derived from the original CIFAR-100 test set (10,000 images) by applying 19 different corruption types at 5 severity levels. The corruptions include noise, blur, weather effects, and digital distortions. This dataset is widely used for benchmarking robustness in image classification tasks.\n\n### Dataset Sources\n\n<!-- Provide the basic links for the dataset. -->\n\n- **Homepage:** https://github.com/hendrycks/robustness\n- **Paper:** Hendrycks, D., & Dietterich, T. (2019). Benchmarking neural network robustness to common corruptions and perturbations. arXiv preprint arXiv:1903.12261.\n\n## Dataset Structure\n\n<!-- This section provides a description of the dataset fields, and additional information about the dataset structure such as criteria used to create the splits, relationships between data points, etc. -->\n\nEach sample in the dataset contains:\n\n- **image**: A 32×32 RGB image in PNG format\n\n- **label**: An integer between 0 and 99, representing the class\n\n- **corruption_name**: The name of the applied corruption\n\n- **corruption_level**: An integer between 1 and 5 indicating severity\n\n\nTotal images: 950,000\n\nClasses: 100 (e.g., apple, aquarium fish, baby, bear, beaver, bed, bee, beetle, bicycle, bottle, etc.)\n\nCorruptions: 19 types (e.g., Gaussian noise, motion blur, contrast, fog, frost, elastic transform, pixelate, JPEG compression, etc.)\n\nSeverity Levels: 5 (ranging from least to most severe)\n\nSplits:\n\n- **Test:** 950,000 images\n\nImage specs: PNG format, 32×32 pixels, RGB\n\n## Example Usage\nBelow is a quick example of how to load this dataset via the Hugging Face Datasets library.\n```\nfrom datasets import load_dataset  \n\n# Load the dataset  \ndataset = load_dataset(\"randall-lab/cifar100-c\", split=\"test\", trust_remote_code=True)  \n\n# Access a sample from the dataset  \nexample = dataset[0]  \nimage = example[\"image\"]  \nlabel = example[\"label\"]  \n\nimage.show()  # Display the image  \nprint(f\"Label: {label}\")\n```\n\n## Citation\n\n<!-- If there is a paper or blog post introducing the dataset, the APA and Bibtex information for that should go in this section. -->\n\n**BibTeX:**\n\n@article{hendrycks2019benchmarking,\n  title={Benchmarking neural network robustness to common corruptions and perturbations},\n  author={Hendrycks, Dan and Dietterich, Thomas},\n  journal={arXiv preprint arXiv:1903.12261},\n  year={2019}\n}\n",
+              "extracted_code": "from datasets import load_dataset\n\n# Load the dataset\ndataset = load_dataset(\"randall-lab/cifar100-c\", split=\"test\", trust_remote_code=True)\n\n# Access a sample from the dataset\nexample = dataset[0]\nimage = example[\"image\"]\nlabel = example[\"label\"]\n\nimage.show()  # Display the image\nprint(f\"Label: {label}\")"
+            },
+            {
+              "id": "ang9867/ImageNet-C",
+              "author": "ang9867",
+              "sha": "a3238187801ec6d849d67ebbacd3616de4c36087",
+              "created_at": "2024-07-16T21:17:12+00:00",
+              "last_modified": "2024-07-28T21:15:13+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 82,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00002-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00003-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00004-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00005-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00006-of-00242.parquet"
+                },
+                {
+                  "rfilename": "data/train-00007-of-00242.parquet"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "license:mit",
+                "size_categories:1M<n<10M",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\r\nlicense: mit\r\ndataset_info:\r\n  features:\r\n  - name: image\r\n    dtype: image\r\n  - name: label\r\n    dtype:\r\n      class_label:\r\n        names:\r\n          '0': n01440764\r\n          '1': n01443537\r\n          '2': n01484850\r\n          '3': n01491361\r\n          '4': n01494475\r\n          '5': n01496331\r\n          '6': n01498041\r\n          '7': n01514668\r\n          '8': n01514859\r\n          '9': n01518878\r\n          '10': n01530575\r\n          '11': n01531178\r\n          '12': n01532829\r\n          '13': n01534433\r\n          '14': n01537544\r\n          '15': n01558993\r\n          '16': n01560419\r\n          '17': n01580077\r\n          '18': n01582220\r\n          '19': n01592084\r\n          '20': n01601694\r\n          '21': n01608432\r\n          '22': n01614925\r\n          '23': n01616318\r\n          '24': n01622779\r\n          '25': n01629819\r\n          '26': n01630670\r\n          '27': n01631663\r\n          '28': n01632458\r\n          '29': n01632777\r\n          '30': n01641577\r\n          '31': n01644373\r\n          '32': n01644900\r\n          '33': n01664065\r\n          '34': n01665541\r\n          '35': n01667114\r\n          '36': n01667778\r\n          '37': n01669191\r\n          '38': n01675722\r\n          '39': n01677366\r\n          '40': n01682714\r\n          '41': n01685808\r\n          '42': n01687978\r\n          '43': n01688243\r\n          '44': n01689811\r\n          '45': n01692333\r\n          '46': n01693334\r\n          '47': n01694178\r\n          '48': n01695060\r\n          '49': n01697457\r\n          '50': n01698640\r\n          '51': n01704323\r\n          '52': n01728572\r\n          '53': n01728920\r\n          '54': n01729322\r\n          '55': n01729977\r\n          '56': n01734418\r\n          '57': n01735189\r\n          '58': n01737021\r\n          '59': n01739381\r\n          '60': n01740131\r\n          '61': n01742172\r\n          '62': n01744401\r\n          '63': n01748264\r\n          '64': n01749939\r\n          '65': n01751748\r\n          '66': n01753488\r\n          '67': n01755581\r\n          '68': n01756291\r\n          '69': n01768244\r\n          '70': n01770081\r\n          '71': n01770393\r\n          '72': n01773157\r\n          '73': n01773549\r\n          '74': n01773797\r\n          '75': n01774384\r\n          '76': n01774750\r\n          '77': n01775062\r\n          '78': n01776313\r\n          '79': n01784675\r\n          '80': n01795545\r\n          '81': n01796340\r\n          '82': n01797886\r\n          '83': n01798484\r\n          '84': n01806143\r\n          '85': n01806567\r\n          '86': n01807496\r\n          '87': n01817953\r\n          '88': n01818515\r\n          '89': n01819313\r\n          '90': n01820546\r\n          '91': n01824575\r\n          '92': n01828970\r\n          '93': n01829413\r\n          '94': n01833805\r\n          '95': n01843065\r\n          '96': n01843383\r\n          '97': n01847000\r\n          '98': n01855032\r\n          '99': n01855672\r\n          '100': n01860187\r\n          '101': n01871265\r\n          '102': n01872401\r\n          '103': n01873310\r\n          '104': n01877812\r\n          '105': n01882714\r\n          '106': n01883070\r\n          '107': n01910747\r\n          '108': n01914609\r\n          '109': n01917289\r\n          '110': n01924916\r\n          '111': n01930112\r\n          '112': n01943899\r\n          '113': n01944390\r\n          '114': n01945685\r\n          '115': n01950731\r\n          '116': n01955084\r\n          '117': n01968897\r\n          '118': n01978287\r\n          '119': n01978455\r\n          '120': n01980166\r\n          '121': n01981276\r\n          '122': n01983481\r\n          '123': n01984695\r\n          '124': n01985128\r\n          '125': n01986214\r\n          '126': n01990800\r\n          '127': n02002556\r\n          '128': n02002724\r\n          '129': n02006656\r\n          '130': n02007558\r\n          '131': n02009229\r\n          '132': n02009912\r\n          '133': n02011460\r\n          '134': n02012849\r\n          '135': n02013706\r\n          '136': n02017213\r\n          '137': n02018207\r\n          '138': n02018795\r\n          '139': n02025239\r\n          '140': n02027492\r\n          '141': n02028035\r\n          '142': n02033041\r\n          '143': n02037110\r\n          '144': n02051845\r\n          '145': n02056570\r\n          '146': n02058221\r\n          '147': n02066245\r\n          '148': n02071294\r\n          '149': n02074367\r\n          '150': n02077923\r\n          '151': n02085620\r\n          '152': n02085782\r\n          '153': n02085936\r\n          '154': n02086079\r\n          '155': n02086240\r\n          '156': n02086646\r\n          '157': n02086910\r\n          '158': n02087046\r\n          '159': n02087394\r\n          '160': n02088094\r\n          '161': n02088238\r\n          '162': n02088364\r\n          '163': n02088466\r\n          '164': n02088632\r\n          '165': n02089078\r\n          '166': n02089867\r\n          '167': n02089973\r\n          '168': n02090379\r\n          '169': n02090622\r\n          '170': n02090721\r\n          '171': n02091032\r\n          '172': n02091134\r\n          '173': n02091244\r\n          '174': n02091467\r\n          '175': n02091635\r\n          '176': n02091831\r\n          '177': n02092002\r\n          '178': n02092339\r\n          '179': n02093256\r\n          '180': n02093428\r\n          '181': n02093647\r\n          '182': n02093754\r\n          '183': n02093859\r\n          '184': n02093991\r\n          '185': n02094114\r\n          '186': n02094258\r\n          '187': n02094433\r\n          '188': n02095314\r\n          '189': n02095570\r\n          '190': n02095889\r\n          '191': n02096051\r\n          '192': n02096177\r\n          '193': n02096294\r\n          '194': n02096437\r\n          '195': n02096585\r\n          '196': n02097047\r\n          '197': n02097130\r\n          '198': n02097209\r\n          '199': n02097298\r\n          '200': n02097474\r\n          '201': n02097658\r\n          '202': n02098105\r\n          '203': n02098286\r\n          '204': n02098413\r\n          '205': n02099267\r\n          '206': n02099429\r\n          '207': n02099601\r\n          '208': n02099712\r\n          '209': n02099849\r\n          '210': n02100236\r\n          '211': n02100583\r\n          '212': n02100735\r\n          '213': n02100877\r\n          '214': n02101006\r\n          '215': n02101388\r\n          '216': n02101556\r\n          '217': n02102040\r\n          '218': n02102177\r\n          '219': n02102318\r\n          '220': n02102480\r\n          '221': n02102973\r\n          '222': n02104029\r\n          '223': n02104365\r\n          '224': n02105056\r\n          '225': n02105162\r\n          '226': n02105251\r\n          '227': n02105412\r\n          '228': n02105505\r\n          '229': n02105641\r\n          '230': n02105855\r\n          '231': n02106030\r\n          '232': n02106166\r\n          '233': n02106382\r\n          '234': n02106550\r\n          '235': n02106662\r\n          '236': n02107142\r\n          '237': n02107312\r\n          '238': n02107574\r\n          '239': n02107683\r\n          '240': n02107908\r\n          '241': n02108000\r\n          '242': n02108089\r\n          '243': n02108422\r\n          '244': n02108551\r\n          '245': n02108915\r\n          '246': n02109047\r\n          '247': n02109525\r\n          '248': n02109961\r\n          '249': n02110063\r\n          '250': n02110185\r\n          '251': n02110341\r\n          '252': n02110627\r\n          '253': n02110806\r\n          '254': n02110958\r\n          '255': n02111129\r\n          '256': n02111277\r\n          '257': n02111500\r\n          '258': n02111889\r\n          '259': n02112018\r\n          '260': n02112137\r\n          '261': n02112350\r\n          '262': n02112706\r\n          '263': n02113023\r\n          '264': n02113186\r\n          '265': n02113624\r\n          '266': n02113712\r\n          '267': n02113799\r\n          '268': n02113978\r\n          '269': n02114367\r\n          '270': n02114548\r\n          '271': n02114712\r\n          '272': n02114855\r\n          '273': n02115641\r\n          '274': n02115913\r\n          '275': n02116738\r\n          '276': n02117135\r\n          '277': n02119022\r\n          '278': n02119789\r\n          '279': n02120079\r\n          '280': n02120505\r\n          '281': n02123045\r\n          '282': n02123159\r\n          '283': n02123394\r\n          '284': n02123597\r\n          '285': n02124075\r\n          '286': n02125311\r\n          '287': n02127052\r\n          '288': n02128385\r\n          '289': n02128757\r\n          '290': n02128925\r\n          '291': n02129165\r\n          '292': n02129604\r\n          '293': n02130308\r\n          '294': n02132136\r\n          '295': n02133161\r\n          '296': n02134084\r\n          '297': n02134418\r\n          '298': n02137549\r\n          '299': n02138441\r\n          '300': n02165105\r\n          '301': n02165456\r\n          '302': n02167151\r\n          '303': n02168699\r\n          '304': n02169497\r\n          '305': n02172182\r\n          '306': n02174001\r\n          '307': n02177972\r\n          '308': n02190166\r\n          '309': n02206856\r\n          '310': n02219486\r\n          '311': n02226429\r\n          '312': n02229544\r\n          '313': n02231487\r\n          '314': n02233338\r\n          '315': n02236044\r\n          '316': n02256656\r\n          '317': n02259212\r\n          '318': n02264363\r\n          '319': n02268443\r\n          '320': n02268853\r\n          '321': n02276258\r\n          '322': n02277742\r\n          '323': n02279972\r\n          '324': n02280649\r\n          '325': n02281406\r\n          '326': n02281787\r\n          '327': n02317335\r\n          '328': n02319095\r\n          '329': n02321529\r\n          '330': n02325366\r\n          '331': n02326432\r\n          '332': n02328150\r\n          '333': n02342885\r\n          '334': n02346627\r\n          '335': n02356798\r\n          '336': n02361337\r\n          '337': n02363005\r\n          '338': n02364673\r\n          '339': n02389026\r\n          '340': n02391049\r\n          '341': n02395406\r\n          '342': n02396427\r\n          '343': n02397096\r\n          '344': n02398521\r\n          '345': n02403003\r\n          '346': n02408429\r\n          '347': n02410509\r\n          '348': n02412080\r\n          '349': n02415577\r\n          '350': n02417914\r\n          '351': n02422106\r\n          '352': n02422699\r\n          '353': n02423022\r\n          '354': n02437312\r\n          '355': n02437616\r\n          '356': n02441942\r\n          '357': n02442845\r\n          '358': n02443114\r\n          '359': n02443484\r\n          '360': n02444819\r\n          '361': n02445715\r\n          '362': n02447366\r\n          '363': n02454379\r\n          '364': n02457408\r\n          '365': n02480495\r\n          '366': n02480855\r\n          '367': n02481823\r\n          '368': n02483362\r\n          '369': n02483708\r\n          '370': n02484975\r\n          '371': n02486261\r\n          '372': n02486410\r\n          '373': n02487347\r\n          '374': n02488291\r\n          '375': n02488702\r\n          '376': n02489166\r\n          '377': n02490219\r\n          '378': n02492035\r\n          '379': n02492660\r\n          '380': n02493509\r\n          '381': n02493793\r\n          '382': n02494079\r\n          '383': n02497673\r\n          '384': n02500267\r\n          '385': n02504013\r\n          '386': n02504458\r\n          '387': n02509815\r\n          '388': n02510455\r\n          '389': n02514041\r\n          '390': n02526121\r\n          '391': n02536864\r\n          '392': n02606052\r\n          '393': n02607072\r\n          '394': n02640242\r\n          '395': n02641379\r\n          '396': n02643566\r\n          '397': n02655020\r\n          '398': n02666196\r\n          '399': n02667093\r\n          '400': n02669723\r\n          '401': n02672831\r\n          '402': n02676566\r\n          '403': n02687172\r\n          '404': n02690373\r\n          '405': n02692877\r\n          '406': n02699494\r\n          '407': n02701002\r\n          '408': n02704792\r\n          '409': n02708093\r\n          '410': n02727426\r\n          '411': n02730930\r\n          '412': n02747177\r\n          '413': n02749479\r\n          '414': n02769748\r\n          '415': n02776631\r\n          '416': n02777292\r\n          '417': n02782093\r\n          '418': n02783161\r\n          '419': n02786058\r\n          '420': n02787622\r\n          '421': n02788148\r\n          '422': n02790996\r\n          '423': n02791124\r\n          '424': n02791270\r\n          '425': n02793495\r\n          '426': n02794156\r\n          '427': n02795169\r\n          '428': n02797295\r\n          '429': n02799071\r\n          '430': n02802426\r\n          '431': n02804414\r\n          '432': n02804610\r\n          '433': n02807133\r\n          '434': n02808304\r\n          '435': n02808440\r\n          '436': n02814533\r\n          '437': n02814860\r\n          '438': n02815834\r\n          '439': n02817516\r\n          '440': n02823428\r\n          '441': n02823750\r\n          '442': n02825657\r\n          '443': n02834397\r\n          '444': n02835271\r\n          '445': n02837789\r\n          '446': n02840245\r\n          '447': n02841315\r\n          '448': n02843684\r\n          '449': n02859443\r\n          '450': n02860847\r\n          '451': n02865351\r\n          '452': n02869837\r\n          '453': n02870880\r\n          '454': n02871525\r\n          '455': n02877765\r\n          '456': n02879718\r\n          '457': n02883205\r\n          '458': n02892201\r\n          '459': n02892767\r\n          '460': n02894605\r\n          '461': n02895154\r\n          '462': n02906734\r\n          '463': n02909870\r\n          '464': n02910353\r\n          '465': n02916936\r\n          '466': n02917067\r\n          '467': n02927161\r\n          '468': n02930766\r\n          '469': n02939185\r\n          '470': n02948072\r\n          '471': n02950826\r\n          '472': n02951358\r\n          '473': n02951585\r\n          '474': n02963159\r\n          '475': n02965783\r\n          '476': n02966193\r\n          '477': n02966687\r\n          '478': n02971356\r\n          '479': n02974003\r\n          '480': n02977058\r\n          '481': n02978881\r\n          '482': n02979186\r\n          '483': n02980441\r\n          '484': n02981792\r\n          '485': n02988304\r\n          '486': n02992211\r\n          '487': n02992529\r\n          '488': n02999410\r\n          '489': n03000134\r\n          '490': n03000247\r\n          '491': n03000684\r\n          '492': n03014705\r\n          '493': n03016953\r\n          '494': n03017168\r\n          '495': n03018349\r\n          '496': n03026506\r\n          '497': n03028079\r\n          '498': n03032252\r\n          '499': n03041632\r\n          '500': n03042490\r\n          '501': n03045698\r\n          '502': n03047690\r\n          '503': n03062245\r\n          '504': n03063599\r\n          '505': n03063689\r\n          '506': n03065424\r\n          '507': n03075370\r\n          '508': n03085013\r\n          '509': n03089624\r\n          '510': n03095699\r\n          '511': n03100240\r\n          '512': n03109150\r\n          '513': n03110669\r\n          '514': n03124043\r\n          '515': n03124170\r\n          '516': n03125729\r\n          '517': n03126707\r\n          '518': n03127747\r\n          '519': n03127925\r\n          '520': n03131574\r\n          '521': n03133878\r\n          '522': n03134739\r\n          '523': n03141823\r\n          '524': n03146219\r\n          '525': n03160309\r\n          '526': n03179701\r\n          '527': n03180011\r\n          '528': n03187595\r\n          '529': n03188531\r\n          '530': n03196217\r\n          '531': n03197337\r\n          '532': n03201208\r\n          '533': n03207743\r\n          '534': n03207941\r\n          '535': n03208938\r\n          '536': n03216828\r\n          '537': n03218198\r\n          '538': n03220513\r\n          '539': n03223299\r\n          '540': n03240683\r\n          '541': n03249569\r\n          '542': n03250847\r\n          '543': n03255030\r\n          '544': n03259280\r\n          '545': n03271574\r\n          '546': n03272010\r\n          '547': n03272562\r\n          '548': n03290653\r\n          '549': n03291819\r\n          '550': n03297495\r\n          '551': n03314780\r\n          '552': n03325584\r\n          '553': n03337140\r\n          '554': n03344393\r\n          '555': n03345487\r\n          '556': n03347037\r\n          '557': n03355925\r\n          '558': n03372029\r\n          '559': n03376595\r\n          '560': n03379051\r\n          '561': n03384352\r\n          '562': n03388043\r\n          '563': n03388183\r\n          '564': n03388549\r\n          '565': n03393912\r\n          '566': n03394916\r\n          '567': n03400231\r\n          '568': n03404251\r\n          '569': n03417042\r\n          '570': n03424325\r\n          '571': n03425413\r\n          '572': n03443371\r\n          '573': n03444034\r\n          '574': n03445777\r\n          '575': n03445924\r\n          '576': n03447447\r\n          '577': n03447721\r\n          '578': n03450230\r\n          '579': n03452741\r\n          '580': n03457902\r\n          '581': n03459775\r\n          '582': n03461385\r\n          '583': n03467068\r\n          '584': n03476684\r\n          '585': n03476991\r\n          '586': n03478589\r\n          '587': n03481172\r\n          '588': n03482405\r\n          '589': n03483316\r\n          '590': n03485407\r\n          '591': n03485794\r\n          '592': n03492542\r\n          '593': n03494278\r\n          '594': n03495258\r\n          '595': n03496892\r\n          '596': n03498962\r\n          '597': n03527444\r\n          '598': n03529860\r\n          '599': n03530642\r\n          '600': n03532672\r\n          '601': n03534580\r\n          '602': n03535780\r\n          '603': n03538406\r\n          '604': n03544143\r\n          '605': n03584254\r\n          '606': n03584829\r\n          '607': n03590841\r\n          '608': n03594734\r\n          '609': n03594945\r\n          '610': n03595614\r\n          '611': n03598930\r\n          '612': n03599486\r\n          '613': n03602883\r\n          '614': n03617480\r\n          '615': n03623198\r\n          '616': n03627232\r\n          '617': n03630383\r\n          '618': n03633091\r\n          '619': n03637318\r\n          '620': n03642806\r\n          '621': n03649909\r\n          '622': n03657121\r\n          '623': n03658185\r\n          '624': n03661043\r\n          '625': n03662601\r\n          '626': n03666591\r\n          '627': n03670208\r\n          '628': n03673027\r\n          '629': n03676483\r\n          '630': n03680355\r\n          '631': n03690938\r\n          '632': n03691459\r\n          '633': n03692522\r\n          '634': n03697007\r\n          '635': n03706229\r\n          '636': n03709823\r\n          '637': n03710193\r\n          '638': n03710637\r\n          '639': n03710721\r\n          '640': n03717622\r\n          '641': n03720891\r\n          '642': n03721384\r\n          '643': n03724870\r\n          '644': n03729826\r\n          '645': n03733131\r\n          '646': n03733281\r\n          '647': n03733805\r\n          '648': n03742115\r\n          '649': n03743016\r\n          '650': n03759954\r\n          '651': n03761084\r\n          '652': n03763968\r\n          '653': n03764736\r\n          '654': n03769881\r\n          '655': n03770439\r\n          '656': n03770679\r\n          '657': n03773504\r\n          '658': n03775071\r\n          '659': n03775546\r\n          '660': n03776460\r\n          '661': n03777568\r\n          '662': n03777754\r\n          '663': n03781244\r\n          '664': n03782006\r\n          '665': n03785016\r\n          '666': n03786901\r\n          '667': n03787032\r\n          '668': n03788195\r\n          '669': n03788365\r\n          '670': n03791053\r\n          '671': n03792782\r\n          '672': n03792972\r\n          '673': n03793489\r\n          '674': n03794056\r\n          '675': n03796401\r\n          '676': n03803284\r\n          '677': n03804744\r\n          '678': n03814639\r\n          '679': n03814906\r\n          '680': n03825788\r\n          '681': n03832673\r\n          '682': n03837869\r\n          '683': n03838899\r\n          '684': n03840681\r\n          '685': n03841143\r\n          '686': n03843555\r\n          '687': n03854065\r\n          '688': n03857828\r\n          '689': n03866082\r\n          '690': n03868242\r\n          '691': n03868863\r\n          '692': n03871628\r\n          '693': n03873416\r\n          '694': n03874293\r\n          '695': n03874599\r\n          '696': n03876231\r\n          '697': n03877472\r\n          '698': n03877845\r\n          '699': n03884397\r\n          '700': n03887697\r\n          '701': n03888257\r\n          '702': n03888605\r\n          '703': n03891251\r\n          '704': n03891332\r\n          '705': n03895866\r\n          '706': n03899768\r\n          '707': n03902125\r\n          '708': n03903868\r\n          '709': n03908618\r\n          '710': n03908714\r\n          '711': n03916031\r\n          '712': n03920288\r\n          '713': n03924679\r\n          '714': n03929660\r\n          '715': n03929855\r\n          '716': n03930313\r\n          '717': n03930630\r\n          '718': n03933933\r\n          '719': n03935335\r\n          '720': n03937543\r\n          '721': n03938244\r\n          '722': n03942813\r\n          '723': n03944341\r\n          '724': n03947888\r\n          '725': n03950228\r\n          '726': n03954731\r\n          '727': n03956157\r\n          '728': n03958227\r\n          '729': n03961711\r\n          '730': n03967562\r\n          '731': n03970156\r\n          '732': n03976467\r\n          '733': n03976657\r\n          '734': n03977966\r\n          '735': n03980874\r\n          '736': n03982430\r\n          '737': n03983396\r\n          '738': n03991062\r\n          '739': n03992509\r\n          '740': n03995372\r\n          '741': n03998194\r\n          '742': n04004767\r\n          '743': n04005630\r\n          '744': n04008634\r\n          '745': n04009552\r\n          '746': n04019541\r\n          '747': n04023962\r\n          '748': n04026417\r\n          '749': n04033901\r\n          '750': n04033995\r\n          '751': n04037443\r\n          '752': n04039381\r\n          '753': n04040759\r\n          '754': n04041544\r\n          '755': n04044716\r\n          '756': n04049303\r\n          '757': n04065272\r\n          '758': n04067472\r\n          '759': n04069434\r\n          '760': n04070727\r\n          '761': n04074963\r\n          '762': n04081281\r\n          '763': n04086273\r\n          '764': n04090263\r\n          '765': n04099969\r\n          '766': n04111531\r\n          '767': n04116512\r\n          '768': n04118538\r\n          '769': n04118776\r\n          '770': n04120489\r\n          '771': n04125021\r\n          '772': n04127249\r\n          '773': n04131690\r\n          '774': n04133789\r\n          '775': n04136333\r\n          '776': n04141076\r\n          '777': n04141327\r\n          '778': n04141975\r\n          '779': n04146614\r\n          '780': n04147183\r\n          '781': n04149813\r\n          '782': n04152593\r\n          '783': n04153751\r\n          '784': n04154565\r\n          '785': n04162706\r\n          '786': n04179913\r\n          '787': n04192698\r\n          '788': n04200800\r\n          '789': n04201297\r\n          '790': n04204238\r\n          '791': n04204347\r\n          '792': n04208210\r\n          '793': n04209133\r\n          '794': n04209239\r\n          '795': n04228054\r\n          '796': n04229816\r\n          '797': n04235860\r\n          '798': n04238763\r\n          '799': n04239074\r\n          '800': n04243546\r\n          '801': n04251144\r\n          '802': n04252077\r\n          '803': n04252225\r\n          '804': n04254120\r\n          '805': n04254680\r\n          '806': n04254777\r\n          '807': n04258138\r\n          '808': n04259630\r\n          '809': n04263257\r\n          '810': n04264628\r\n          '811': n04265275\r\n          '812': n04266014\r\n          '813': n04270147\r\n          '814': n04273569\r\n          '815': n04275548\r\n          '816': n04277352\r\n          '817': n04285008\r\n          '818': n04286575\r\n          '819': n04296562\r\n          '820': n04310018\r\n          '821': n04311004\r\n          '822': n04311174\r\n          '823': n04317175\r\n          '824': n04325704\r\n          '825': n04326547\r\n          '826': n04328186\r\n          '827': n04330267\r\n          '828': n04332243\r\n          '829': n04335435\r\n          '830': n04336792\r\n          '831': n04344873\r\n          '832': n04346328\r\n          '833': n04347754\r\n          '834': n04350905\r\n          '835': n04355338\r\n          '836': n04355933\r\n          '837': n04356056\r\n          '838': n04357314\r\n          '839': n04366367\r\n          '840': n04367480\r\n          '841': n04370456\r\n          '842': n04371430\r\n          '843': n04371774\r\n          '844': n04372370\r\n          '845': n04376876\r\n          '846': n04380533\r\n          '847': n04389033\r\n          '848': n04392985\r\n          '849': n04398044\r\n          '850': n04399382\r\n          '851': n04404412\r\n          '852': n04409515\r\n          '853': n04417672\r\n          '854': n04418357\r\n          '855': n04423845\r\n          '856': n04428191\r\n          '857': n04429376\r\n          '858': n04435653\r\n          '859': n04442312\r\n          '860': n04443257\r\n          '861': n04447861\r\n          '862': n04456115\r\n          '863': n04458633\r\n          '864': n04461696\r\n          '865': n04462240\r\n          '866': n04465501\r\n          '867': n04467665\r\n          '868': n04476259\r\n          '869': n04479046\r\n          '870': n04482393\r\n          '871': n04483307\r\n          '872': n04485082\r\n          '873': n04486054\r\n          '874': n04487081\r\n          '875': n04487394\r\n          '876': n04493381\r\n          '877': n04501370\r\n          '878': n04505470\r\n          '879': n04507155\r\n          '880': n04509417\r\n          '881': n04515003\r\n          '882': n04517823\r\n          '883': n04522168\r\n          '884': n04523525\r\n          '885': n04525038\r\n          '886': n04525305\r\n          '887': n04532106\r\n          '888': n04532670\r\n          '889': n04536866\r\n          '890': n04540053\r\n          '891': n04542943\r\n          '892': n04548280\r\n          '893': n04548362\r\n          '894': n04550184\r\n          '895': n04552348\r\n          '896': n04553703\r\n          '897': n04554684\r\n          '898': n04557648\r\n          '899': n04560804\r\n          '900': n04562935\r\n          '901': n04579145\r\n          '902': n04579432\r\n          '903': n04584207\r\n          '904': n04589890\r\n          '905': n04590129\r\n          '906': n04591157\r\n          '907': n04591713\r\n          '908': n04592741\r\n          '909': n04596742\r\n          '910': n04597913\r\n          '911': n04599235\r\n          '912': n04604644\r\n          '913': n04606251\r\n          '914': n04612504\r\n          '915': n04613696\r\n          '916': n06359193\r\n          '917': n06596364\r\n          '918': n06785654\r\n          '919': n06794110\r\n          '920': n06874185\r\n          '921': n07248320\r\n          '922': n07565083\r\n          '923': n07579787\r\n          '924': n07583066\r\n          '925': n07584110\r\n          '926': n07590611\r\n          '927': n07613480\r\n          '928': n07614500\r\n          '929': n07615774\r\n          '930': n07684084\r\n          '931': n07693725\r\n          '932': n07695742\r\n          '933': n07697313\r\n          '934': n07697537\r\n          '935': n07711569\r\n          '936': n07714571\r\n          '937': n07714990\r\n          '938': n07715103\r\n          '939': n07716358\r\n          '940': n07716906\r\n          '941': n07717410\r\n          '942': n07717556\r\n          '943': n07718472\r\n          '944': n07718747\r\n          '945': n07720875\r\n          '946': n07730033\r\n          '947': n07734744\r\n          '948': n07742313\r\n          '949': n07745940\r\n          '950': n07747607\r\n          '951': n07749582\r\n          '952': n07753113\r\n          '953': n07753275\r\n          '954': n07753592\r\n          '955': n07754684\r\n          '956': n07760859\r\n          '957': n07768694\r\n          '958': n07802026\r\n          '959': n07831146\r\n          '960': n07836838\r\n          '961': n07860988\r\n          '962': n07871810\r\n          '963': n07873807\r\n          '964': n07875152\r\n          '965': n07880968\r\n          '966': n07892512\r\n          '967': n07920052\r\n          '968': n07930864\r\n          '969': n07932039\r\n          '970': n09193705\r\n          '971': n09229709\r\n          '972': n09246464\r\n          '973': n09256479\r\n          '974': n09288635\r\n          '975': n09332890\r\n          '976': n09399592\r\n          '977': n09421951\r\n          '978': n09428293\r\n          '979': n09468604\r\n          '980': n09472597\r\n          '981': n09835506\r\n          '982': n10148035\r\n          '983': n10565667\r\n          '984': n11879895\r\n          '985': n11939491\r\n          '986': n12057211\r\n          '987': n12144580\r\n          '988': n12267677\r\n          '989': n12620546\r\n          '990': n12768682\r\n          '991': n12985857\r\n          '992': n12998815\r\n          '993': n13037406\r\n          '994': n13040303\r\n          '995': n13044778\r\n          '996': n13052670\r\n          '997': n13054560\r\n          '998': n13133613\r\n          '999': n15075141\r\n  splits:\r\n  - name: train\r\n    num_bytes: 120512284856.408\r\n    num_examples: 1277654\r\n  download_size: 98118877988\r\n  dataset_size: 120512284856.408\r\nconfigs:\r\n- config_name: default\r\n  data_files:\r\n  - split: train\r\n    path: data/train-*\r\n---\r\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "cogsci13/Imagenet-Class",
+              "author": "cogsci13",
+              "sha": "d71a827cf67212cd810485f77830d9876033ad12",
+              "created_at": "2024-04-22T16:42:36+00:00",
+              "last_modified": "2024-04-22T21:50:52+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 81,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00002-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00003-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00004-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00005-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00006-of-00310.parquet"
+                },
+                {
+                  "rfilename": "data/train-00007-of-00310.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:1M<n<10M",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: labels\n    dtype: int64\n  - name: class_ids\n    dtype: string\n  - name: class_names\n    dtype: string\n  splits:\n  - name: train\n    num_bytes: 154860034195.012\n    num_examples: 1281167\n  download_size: 146539410924\n  dataset_size: 154860034195.012\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: data/train-*\n---\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "Bruece/domainnet-126-by-class-sketch",
+              "author": "Bruece",
+              "sha": "caf5007d52a0c14f1a73d7a4cf2acd4debebf0b0",
+              "created_at": "2025-02-04T03:31:33+00:00",
+              "last_modified": "2025-02-04T03:32:27+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 11,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00002.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00002.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: text\n    dtype: string\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': aircraft_carrier\n          '1': alarm_clock\n          '2': ant\n          '3': anvil\n          '4': asparagus\n          '5': axe\n          '6': banana\n          '7': basket\n          '8': bathtub\n          '9': bear\n          '10': bee\n          '11': bird\n          '12': blackberry\n          '13': blueberry\n          '14': bottlecap\n          '15': broccoli\n          '16': bus\n          '17': butterfly\n          '18': cactus\n          '19': cake\n          '20': calculator\n          '21': camel\n          '22': camera\n          '23': candle\n          '24': cannon\n          '25': canoe\n          '26': carrot\n          '27': castle\n          '28': cat\n          '29': ceiling_fan\n          '30': cell_phone\n          '31': cello\n          '32': chair\n          '33': chandelier\n          '34': coffee_cup\n          '35': compass\n          '36': computer\n          '37': cow\n          '38': crab\n          '39': crocodile\n          '40': cruise_ship\n          '41': dog\n          '42': dolphin\n          '43': dragon\n          '44': drums\n          '45': duck\n          '46': dumbbell\n          '47': elephant\n          '48': eyeglasses\n          '49': feather\n          '50': fence\n          '51': fish\n          '52': flamingo\n          '53': flower\n          '54': foot\n          '55': fork\n          '56': frog\n          '57': giraffe\n          '58': goatee\n          '59': grapes\n          '60': guitar\n          '61': hammer\n          '62': helicopter\n          '63': helmet\n          '64': horse\n          '65': kangaroo\n          '66': lantern\n          '67': laptop\n          '68': leaf\n          '69': lion\n          '70': lipstick\n          '71': lobster\n          '72': microphone\n          '73': monkey\n          '74': mosquito\n          '75': mouse\n          '76': mug\n          '77': mushroom\n          '78': onion\n          '79': panda\n          '80': peanut\n          '81': pear\n          '82': peas\n          '83': pencil\n          '84': penguin\n          '85': pig\n          '86': pillow\n          '87': pineapple\n          '88': potato\n          '89': power_outlet\n          '90': purse\n          '91': rabbit\n          '92': raccoon\n          '93': rhinoceros\n          '94': rifle\n          '95': saxophone\n          '96': screwdriver\n          '97': sea_turtle\n          '98': see_saw\n          '99': sheep\n          '100': shoe\n          '101': skateboard\n          '102': snake\n          '103': speedboat\n          '104': spider\n          '105': squirrel\n          '106': strawberry\n          '107': streetlight\n          '108': string_bean\n          '109': submarine\n          '110': swan\n          '111': table\n          '112': teapot\n          '113': teddy-bear\n          '114': television\n          '115': the_Eiffel_Tower\n          '116': the_Great_Wall_of_China\n          '117': tiger\n          '118': toe\n          '119': train\n          '120': truck\n          '121': umbrella\n          '122': vase\n          '123': watermelon\n          '124': whale\n          '125': zebra\n  splits:\n  - name: train\n    num_bytes: 771606863.853\n    num_examples: 19317\n  download_size: 750954608\n  dataset_size: 771606863.853\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: data/train-*\n---\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "Bruece/domainnet-126-edge-image-painting",
+              "author": "Bruece",
+              "sha": "f16ca8454439acaaf60cae0281cc4ba2942ae06b",
+              "created_at": "2024-12-02T05:33:08+00:00",
+              "last_modified": "2024-12-02T05:59:04+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 10,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00005.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00005.parquet"
+                },
+                {
+                  "rfilename": "data/train-00002-of-00005.parquet"
+                },
+                {
+                  "rfilename": "data/train-00003-of-00005.parquet"
+                },
+                {
+                  "rfilename": "data/train-00004-of-00005.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: text\n    dtype: string\n  - name: edge_image\n    dtype: image\n  splits:\n  - name: train\n    num_bytes: 2018430048.984\n    num_examples: 24032\n  download_size: 2029006402\n  dataset_size: 2018430048.984\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: data/train-*\n---\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "Bruece/domainnet-126-by-class-real",
+              "author": "Bruece",
+              "sha": "5f40dc426bb4fe9619e982f623ee2be9b547c1af",
+              "created_at": "2025-02-04T03:30:59+00:00",
+              "last_modified": "2025-02-04T03:33:16+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 10,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00004.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00004.parquet"
+                },
+                {
+                  "rfilename": "data/train-00002-of-00004.parquet"
+                },
+                {
+                  "rfilename": "data/train-00003-of-00004.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: text\n    dtype: string\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': aircraft_carrier\n          '1': alarm_clock\n          '2': ant\n          '3': anvil\n          '4': asparagus\n          '5': axe\n          '6': banana\n          '7': basket\n          '8': bathtub\n          '9': bear\n          '10': bee\n          '11': bird\n          '12': blackberry\n          '13': blueberry\n          '14': bottlecap\n          '15': broccoli\n          '16': bus\n          '17': butterfly\n          '18': cactus\n          '19': cake\n          '20': calculator\n          '21': camel\n          '22': camera\n          '23': candle\n          '24': cannon\n          '25': canoe\n          '26': carrot\n          '27': castle\n          '28': cat\n          '29': ceiling_fan\n          '30': cell_phone\n          '31': cello\n          '32': chair\n          '33': chandelier\n          '34': coffee_cup\n          '35': compass\n          '36': computer\n          '37': cow\n          '38': crab\n          '39': crocodile\n          '40': cruise_ship\n          '41': dog\n          '42': dolphin\n          '43': dragon\n          '44': drums\n          '45': duck\n          '46': dumbbell\n          '47': elephant\n          '48': eyeglasses\n          '49': feather\n          '50': fence\n          '51': fish\n          '52': flamingo\n          '53': flower\n          '54': foot\n          '55': fork\n          '56': frog\n          '57': giraffe\n          '58': goatee\n          '59': grapes\n          '60': guitar\n          '61': hammer\n          '62': helicopter\n          '63': helmet\n          '64': horse\n          '65': kangaroo\n          '66': lantern\n          '67': laptop\n          '68': leaf\n          '69': lion\n          '70': lipstick\n          '71': lobster\n          '72': microphone\n          '73': monkey\n          '74': mosquito\n          '75': mouse\n          '76': mug\n          '77': mushroom\n          '78': onion\n          '79': panda\n          '80': peanut\n          '81': pear\n          '82': peas\n          '83': pencil\n          '84': penguin\n          '85': pig\n          '86': pillow\n          '87': pineapple\n          '88': potato\n          '89': power_outlet\n          '90': purse\n          '91': rabbit\n          '92': raccoon\n          '93': rhinoceros\n          '94': rifle\n          '95': saxophone\n          '96': screwdriver\n          '97': sea_turtle\n          '98': see_saw\n          '99': sheep\n          '100': shoe\n          '101': skateboard\n          '102': snake\n          '103': speedboat\n          '104': spider\n          '105': squirrel\n          '106': strawberry\n          '107': streetlight\n          '108': string_bean\n          '109': submarine\n          '110': swan\n          '111': table\n          '112': teapot\n          '113': teddy-bear\n          '114': television\n          '115': the_Eiffel_Tower\n          '116': the_Great_Wall_of_China\n          '117': tiger\n          '118': toe\n          '119': train\n          '120': truck\n          '121': umbrella\n          '122': vase\n          '123': watermelon\n          '124': whale\n          '125': zebra\n  splits:\n  - name: train\n    num_bytes: 1760467145.308\n    num_examples: 55697\n  download_size: 2036231567\n  dataset_size: 1760467145.308\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: data/train-*\n---\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "Bruece/domainnet-126-edge-image-clipart",
+              "author": "Bruece",
+              "sha": "9b071f729d031514975bd88ceaa7cc521b75d838",
+              "created_at": "2024-12-02T05:32:19+00:00",
+              "last_modified": "2024-12-02T05:57:38+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 9,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00002.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00002.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: text\n    dtype: string\n  - name: edge_image\n    dtype: image\n  splits:\n  - name: train\n    num_bytes: 868365429.076\n    num_examples: 14818\n  download_size: 857654885\n  dataset_size: 868365429.076\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: data/train-*\n---\n",
+              "extracted_code": ""
+            }
+          ]
+        }
+      }
+    }
   },
   "idea_info_history": [
     {
