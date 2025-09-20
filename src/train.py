@@ -10,12 +10,19 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class ZeroSketch:
     """Light-weight Count-Min style sketch with conservative update.
 
-    The earlier implementation produced an erroneous tensor shape
-    (n_keys, rows, rows) which triggered a RuntimeError during the
-    comparison `vals > cur`.  The gather/scatter logic has been
-    rewritten so that every intermediate has the expected
-    (n_keys, rows) shape and the in-place update only touches the
-    counters that actually need to grow.
+    The implementation keeps a *global* counter matrix `C` of shape
+    (rows, w).  Any (key,val) pair is mapped to `rows` counters via a
+    fast multiply-mod hash.  The *conservative* update writes **only**
+    those counters whose current value is smaller than the incoming
+    one.  This guarantees the usual Count-Min error bound while
+    preventing write-amplification on heavily duplicated keys.
+
+    IMPORTANT – dtype discipline:
+      • `C` lives in *fp16* (sufficient for sketch errors we measure).
+      • All temporaries must therefore stay in *fp16* when fed into
+        `scatter_add_`.  A previous bug cast the update mask to fp32
+        which triggered a `RuntimeError: scatter(): Expected self.dtype
+        to be equal to src.dtype`.
     """
 
     def __init__(self, rows: int = 3, w: int = 32) -> None:
@@ -26,25 +33,25 @@ class ZeroSketch:
         # global fp16 accumulator (shared across all graph nodes)
         self.C = torch.zeros(rows, w, device=device, dtype=torch.float16)
 
-    # ---------------------------------------------------------------------
+    # ------------------------------------------------------------------
     #                     Hashing / gather / scatter helpers
-    # ---------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _indices(self, keys: torch.Tensor) -> torch.Tensor:
         """Return the (n_keys, rows) table indices for every key."""
         # Broadcasting: keys[:, None] –> (n_keys, 1) * (rows,) –> (n_keys, rows)
         return ((keys[:, None] * self.hash_a) % self.w).long()
 
     def _gather(self, idx: torch.Tensor) -> torch.Tensor:
-        """Fast gather so that the result is (n_keys, rows) not (n_keys, rows, rows)."""
+        """Efficient gather keeping a 2-D result (n_keys, rows)."""
         # C.gather expects the index to have the same first-dim (rows)
-        # Layout: C        – (rows, w)
-        #         idx.T    – (rows, n_keys)
-        # Result           – (rows, n_keys) → transpose → (n_keys, rows)
+        # Layout: C     – (rows, w)
+        #         idx.T – (rows, n_keys)
+        # Result        – (rows, n_keys) → transpose → (n_keys, rows)
         return self.C.gather(1, idx.T).T.contiguous()
 
-    # ---------------------------------------------------------------------
+    # ------------------------------------------------------------------
     #                        Public sketch interface
-    # ---------------------------------------------------------------------
+    # ------------------------------------------------------------------
     @torch.cuda.amp.autocast(dtype=torch.float16)
     def query(self, keys: torch.Tensor) -> torch.Tensor:
         """Return the conservative (min-row) estimate for a batch of keys."""
@@ -57,33 +64,36 @@ class ZeroSketch:
         """In-place conservative update.
 
         For every (key, row) pair we only touch the counter if the
-        incoming value is larger than the current one.  We achieve an
-        O(1) atomic update per key by masking the scatter targets with
-        a 0/1 `need` tensor.
+        incoming value is larger than the current one.  A *mask* `need`
+        identifies those counters; multiplication by the mask turns the
+        source of `scatter_add_` into 0 or `delta` (new−old), achieving
+        an atomic O(1) update per counter.
         """
-        idx = self._indices(keys)                      # (n_keys, rows)
-        cur = self._gather(idx)                        # (n_keys, rows)
+        idx = self._indices(keys)          # (n_keys, rows)
+        cur = self._gather(idx)            # (n_keys, rows)
 
         # --------------------------- mask of needed updates ---------------------------
-        need = (vals.unsqueeze(1) > cur)               # (n_keys, rows) – boolean
+        need = vals.unsqueeze(1) > cur      # (n_keys, rows) – boolean
         if not need.any():
             return  # nothing to do – early exit avoids needless scatter
 
-        # Shapes compatible with scatter_(add) ➜  (rows, n_keys)
-        need_t   = need.T.float()                      # (rows, n_keys)
-        idx_t    = idx.T                               # (rows, n_keys)
-        vals_t   = vals.unsqueeze(0).expand(self.rows, -1)  # (rows, n_keys)
+        # --------------------------- prepare fp16 tensors -----------------------------
+        # Shapes compatible with scatter_(add)  →  (rows, n_keys)
+        need_t   = need.T.to(dtype=torch.float16)                 # (rows, n_keys) fp16  {0,1}
+        idx_t    = idx.T                                          # (rows, n_keys) int64
+        cur_t    = cur.T                                          # (rows, n_keys) fp16 (view)
+        vals_t   = vals.unsqueeze(0).expand(self.rows, -1)        # (rows, n_keys) fp16
 
-        # ------------------------ atomic add (0 or val) -----------------------------
-        # note: adding the whole value (instead of delta) would over-shoot, therefore
-        # we first zero-out the source wherever the counter is already sufficient.
-        self.C.scatter_add_(1,
-                            idx_t,
-                            need_t * (vals_t - self.C.gather(1, idx_t)))
+        delta = vals_t - cur_t            # only positive where need_t==1 (but cheap to compute)
+        src   = need_t * delta            # fp16 – same dtype as C
 
-    # ---------------------------------------------------------------------
-    #                Convenience helpers (ckpt / restore)                   
-    # ---------------------------------------------------------------------
+        # ------------------------ atomic add (0 or delta) -----------------------------
+        # NOTE: src and self.C have identical dtype (fp16) – this avoids the scatter() dtype error.
+        self.C.scatter_add_(1, idx_t, src)
+
+    # ------------------------------------------------------------------
+    #                Convenience helpers (ckpt / restore)               
+    # ------------------------------------------------------------------
     def state_dict(self) -> Dict[str, Any]:
         return {"C": self.C, "hash_a": self.hash_a}
 
@@ -105,7 +115,7 @@ def train_sketch(cfg: Dict[str, Any]) -> Dict[str, Any]:
     """
     torch.manual_seed(cfg.get("seed", 0))
 
-    n_keys: int = cfg["sketch"].get("n_keys")
+    n_keys: int  = cfg["sketch"].get("n_keys")
     max_val: float = cfg["sketch"].get("max_val")
 
     # -------------------------- deterministic synthetic data -------------------------

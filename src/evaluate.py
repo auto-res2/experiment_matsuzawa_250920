@@ -8,9 +8,9 @@ __all__ = ["evaluate_sketch"]
 
 
 def evaluate_sketch(metrics: Dict[str, Any]) -> None:
-    """Pretty-print metrics and persist them under .research/iteration4/.
+    """Pretty-print metrics and persist them under .research/iteration5/.
 
-    All CI artefacts *must* be written to `.research/iteration4/` – the
+    All CI artefacts *must* be written to `.research/iteration5/` – the
     grading harness asserts the path.  The JSON file is re-opened and
     printed back to STDOUT for immediate visual confirmation.
     """
@@ -22,7 +22,7 @@ def evaluate_sketch(metrics: Dict[str, Any]) -> None:
     print("================================\n")
 
     # ----------------------- persist results for CI run ----------------------
-    out_dir = os.path.join(".research", "iteration4")
+    out_dir = os.path.join(".research", "iteration5")
     os.makedirs(out_dir, exist_ok=True)
     file_name = f"result_sketch_{metrics['n_keys']}.json"
     path = os.path.join(out_dir, file_name)
