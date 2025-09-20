@@ -1,0 +1,21 @@
+=== [PHASE 2/2] Full experiment start Sat Sep 20 04:15:03 PM UTC 2025 ===
+Epoch 005 | loss=1.9193 | val=0.5120 | best_test=0.4890
+Epoch 010 | loss=1.8388 | val=0.6560 | best_test=0.6170
+Epoch 015 | loss=1.5569 | val=0.6280 | best_test=0.6630
+Epoch 020 | loss=1.0161 | val=0.7260 | best_test=0.7130
+Epoch 025 | loss=0.4865 | val=0.7640 | best_test=0.7560
+Epoch 030 | loss=0.2589 | val=0.7560 | best_test=0.7780
+Epoch 035 | loss=0.1547 | val=0.7820 | best_test=0.8020
+Epoch 040 | loss=0.0888 | val=0.7920 | best_test=0.8070
+Epoch 045 | loss=0.0829 | val=0.7860 | best_test=0.8010
+Epoch 050 | loss=0.0978 | val=0.7940 | best_test=0.8010
+=== Training summary ===
+{
+  "best_val": 0.8059999942779541,
+  "best_test": 0.8009999990463257
+}
+=== Evaluation results ===
+{
+  "test_accuracy": 0.7910000085830688
+}
+=== [PHASE 2/2] Full experiment end Sat Sep 20 04:15:25 PM UTC 2025 ===

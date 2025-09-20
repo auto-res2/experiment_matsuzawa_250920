@@ -1,13 +1,13 @@
 run_name: full_run
 
-# Dataset (memory-heavy – ensure A100-80GB)
-dataset: Reddit
+# Dataset (switched to Cora for memory constraints)
+dataset: Cora
 data_root: ./data
 
 model:
   hidden: 128
   num_layers: 3
-  num_classes: 41
+  num_classes: 7
   heads: 8
 
 solver:

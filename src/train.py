@@ -39,7 +39,7 @@ class MaskQuantSolver:
         keep = torch.topk(score, k).indices
         bw = torch.empty_like(phi, dtype=torch.int8)
         bw[:] = 0  # 0 = dropped edge
-        bw[keep] = torch.where(qerr[keep] < 0.02, 8, 4)  # 8- or 4-bit
+        bw[keep] = torch.where(qerr[keep] < 0.02, 8, 4).to(torch.int8)  # 8- or 4-bit
         return bw
 
 
@@ -77,8 +77,16 @@ class ECOGATConv(GATConv):
     def forward(self, x, edge_index, size=None):
         out, (idx, attn) = super().forward(x, edge_index, size, return_attention_weights=True)
         if self.training:
-            phi = (attn.detach() * x[edge_index[0]].norm(dim=1))  # gradient proxy
-            qerr = self.fake_quant_error(x[edge_index[0]])
+            # Use the actual edge indices returned by GAT for consistency
+            actual_edge_index = idx
+            # attn should match the edges in actual_edge_index
+            if attn.dim() > 1 and attn.size(-1) > 1:
+                attn = attn.mean(dim=-1)  # Average across attention heads
+            elif attn.dim() > 1:
+                attn = attn.squeeze(-1)
+
+            phi = attn.detach() * x[actual_edge_index[0]].norm(dim=1)  # gradient proxy
+            qerr = self.fake_quant_error(x[actual_edge_index[0]])
             bw = self.solver.solve(phi, qerr)
             self.bw = bw  # save for backward hooks / analysis
         return out
@@ -117,9 +125,12 @@ def _forward_pass(model, data, device):
 
 def train(model: torch.nn.Module, data: Data, cfg: Dict[str, Any],
           results_path: Path) -> Dict[str, Any]:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Force CPU usage to avoid memory issues
+    device = torch.device("cpu")
     model.to(device)
-    optim = torch.optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+    # Convert weight_decay to float to handle scientific notation parsing issues
+    weight_decay = float(cfg["weight_decay"])
+    optim = torch.optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=weight_decay)
 
     best_val = 0.0
     best_test = 0.0
