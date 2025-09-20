@@ -1,0 +1,5 @@
+{
+  "phase": "full_experiment",
+  "status": "skipped \u2013 missing implementation",
+  "message": "Data loading was not included in the provided Experiment Code."
+}
