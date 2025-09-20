@@ -5,13 +5,18 @@ description = "Universal Cross-layer Elastic Alignment (UniCORN) test-time adapt
 readme = "README.md"
 requires-python = ">=3.10"
 
-[tool.setuptools]
-packages = ["src"]
-
-[project.dependencies]
+# ---------------------------------------------------------------------------
+# Runtime dependencies
+# ---------------------------------------------------------------------------
 dependencies = [
   "torch>=2.0.0",
   "torchvision>=0.15.0",
   "timm>=0.9.2",
   "pyyaml>=6.0.0",
 ]
+
+# ---------------------------------------------------------------------------
+# Packaging configuration (setuptools)
+# ---------------------------------------------------------------------------
+[tool.setuptools.packages.find]
+where = ["src"]
