@@ -1,18 +1,16 @@
-[project]
-name = "hawq_skim"
-version = "0.1.1"
-description = "Refactored experimental code for HAWQ-Skim graph sampler – minimal runnable pipeline"
-requires-python = ">=3.10"
-
-# ---------------------------------------------------------------------------
-# Dependencies --------------------------------------------------------------
-# ---------------------------------------------------------------------------
-dependencies = [
-  "pyyaml>=6.0",
-  "torch>=1.13.0",
-  "numpy>=1.23.0",
-]
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "zerosketch-experiment"
+version = "0.1.0"
+description = "Refactored ZeroSketch experiment (smoke/full)"
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Strict list to keep the runtime lean and deterministic.
+dependencies = [
+  "torch>=1.9.0",
+  "PyYAML>=6.0",
+]

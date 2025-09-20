@@ -1,41 +1,29 @@
-# src/evaluate.py
-"""Simple evaluation helper.
-
-The original refactor contained only a stub.  We now provide a minimal
-implementation that works with the synthetic data set generated in
-``src.preprocess`` and the small MLP trained in ``src.train``.  The
-function returns a metrics dict so that ``src.main`` can serialise it
-into the research artefact JSON file.
-"""
-from __future__ import annotations
-
-from typing import Any, Dict, Tuple
+import json
+import os
+from typing import Dict, Any
 
 import torch
 
-# ---------------------------------------------------------------------------
-# Public API ----------------------------------------------------------------
-# ---------------------------------------------------------------------------
+__all__ = ["evaluate_sketch"]
 
-def evaluate(cfg: Dict[str, Any]) -> Dict[str, float]:  # noqa: D401
-    """Run inference on the held-out *test* split and return metrics."""
 
-    if "data" not in cfg or "model_obj" not in cfg:
-        raise RuntimeError(
-            "Evaluation requires both the data split and a trained model.  "
-            "Make sure to call preprocess.load_data and train.train first."
-        )
+def evaluate_sketch(metrics: Dict[str, Any]) -> None:
+    """Pretty-print metrics to STDOUT and save a JSON copy for later inspection."""
 
-    (x_test, y_test) = cfg["data"]["test"]
-    model = cfg["model_obj"].to(torch.device("cpu"))
+    # ---------------------------- STDOUT summary -----------------------------
+    print("\n===== ZeroSketch Evaluation =====")
+    for k, v in metrics.items():
+        print(f"{k:>12}: {v}")
+    print("================================\n")
 
-    model.eval()
-    with torch.no_grad():
-        preds = model(x_test).argmax(dim=1)
-    correct = (preds == y_test).sum().item()
-    acc = correct / y_test.numel()
+    # ----------------------- persist results for CI run ----------------------
+    out_dir = os.path.join(".research", "iteration3")
+    os.makedirs(out_dir, exist_ok=True)
+    file_name = f"result_sketch_{metrics['n_keys']}.json"
+    path = os.path.join(out_dir, file_name)
 
-    # Attach to cfg for downstream introspection
-    cfg.setdefault("metrics", {})["test_accuracy"] = acc
-
-    return {"test_accuracy": acc}
+    try:
+        with open(path, "w", encoding="utf-8") as fp:
+            json.dump(metrics, fp, indent=2)
+    except IOError as e:
+        print(f"[WARN] Could not write metrics JSON → {e}")
