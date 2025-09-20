@@ -1,22 +1,20 @@
 [project]
-name = "eco_gat"
+name = "eco_gat_refactor"
 version = "0.1.0"
-description = "ECO-GAT research prototype – energy-constrained sparse + quantised GAT"
+description = "Refactored ECO-GAT experiment into a structured, multi-file project"
+authors = ["ML Researcher <researcher@example.com>"]
+readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [
-    "pyyaml>=6.0.2",
-    "scipy>=1.13.1",
-    "torch>=2.8.0",
-    "torch-geometric>=2.6.1",
-]
 
-[build-system]
-requires = ["setuptools", "wheel"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[tool.pdm]
+[project.optional-dependencies]
+# Core scientific stack & PyG (CUDA-enabled wheels are resolved by pip based on platform tags)
 dependencies = [
     "torch>=2.1.0",
     "torch-geometric>=2.4.0",
+    "torch-scatter>=2.1.0",
     "pyyaml>=6.0",
-    "scipy>=1.10.0"
+    "numpy>=1.21.0",
 ]

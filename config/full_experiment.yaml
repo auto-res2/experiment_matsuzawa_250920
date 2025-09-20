@@ -1,21 +1,11 @@
-run_name: full_run
+# Full-scale yet still bounded configuration suitable for A100-80GB
+# Uses the Reddit dataset, a larger hidden dim and more epochs.
 
-# Dataset (switched to Cora for memory constraints)
-dataset: Cora
-data_root: ./data
-
-model:
-  hidden: 128
-  num_layers: 3
-  num_classes: 7
-  heads: 8
-
-solver:
-  flop_budget: 0.15   # 15 % backward FLOPs
-  q_err_budget: 0.02
-
-optim:
-  lr: 0.002
-  weight_decay: 0.0005
-  epochs: 50
-  log_every: 5
+dataset: reddit
+epochs: 5
+hidden_channels: 128
+heads: 8
+lr: 0.003
+flop_budget: 0.2
+quant_err_budget: 0.02
+log_every: 1

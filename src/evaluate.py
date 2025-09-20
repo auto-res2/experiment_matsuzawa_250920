@@ -1,30 +1,34 @@
 import json
-from pathlib import Path
-from typing import Dict, Any
+import os
+from datetime import datetime
+from typing import Dict, Tuple
 
 import torch
-import torch.nn.functional as F
-from torch_geometric.data import Data
 
-__all__ = ["evaluate"]
+from .train import test, ECOGAT
 
+# ----------------------------------------------------------------------------
+# Evaluation utilities
+# ----------------------------------------------------------------------------
 
-def evaluate(model: torch.nn.Module, data: Data, results_path: Path) -> Dict[str, Any]:
-    device = next(model.parameters()).device
-    model.eval()
-    with torch.no_grad():
-        x, edge_index, y = data.x.to(device), data.edge_index.to(device), data.y.to(device)
-        for i, layer in enumerate(model):
-            x = layer(x, edge_index)
-            if i != len(model) - 1:
-                x = F.elu(x)
-        pred = x.argmax(dim=-1)
-        acc = (pred[data.test_mask] == y[data.test_mask]).float().mean().item()
+def evaluate_and_log(model: ECOGAT, data, device: torch.device, run_name: str) -> Dict[str, float]:
+    """Runs test(), prints to stdout, dumps JSON under .research directory."""
+    train_acc, val_acc, test_acc = test(model, data, device)
+    results = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "run_name": run_name,
+        "train_acc": train_acc,
+        "val_acc": val_acc,
+        "test_acc": test_acc,
+    }
 
-    metrics = {"test_accuracy": acc}
-    results_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(results_path, "w") as fp:
-        json.dump(metrics, fp, indent=2)
-    print("=== Evaluation results ===")
-    print(json.dumps(metrics, indent=2))
-    return metrics
+    # Always print to STDOUT for CI visibility
+    print(json.dumps(results, indent=2))
+
+    # Persist to disk for later inspection
+    out_dir = os.path.join(".research", "iteration2")
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, f"{run_name}.json")
+    with open(out_path, "w", encoding="utf-8") as fp:
+        json.dump(results, fp, indent=2)
+    return results

@@ -1,23 +1,11 @@
-run_name: smoke_test
+# Lightweight configuration for CI / sanity check
+# Runs on the tiny Cora dataset with just 1 epoch.
 
-# Dataset & loader
-dataset: Cora
-data_root: ./data
-
-# Model hyper-parameters
-model:
-  hidden: 64
-  num_layers: 2
-  num_classes: 7
-  heads: 4
-
-solver:
-  flop_budget: 0.2   # keep 20 % edges
-  q_err_budget: 0.02
-
-# Optimisation
-optim:
-  lr: 0.005
-  weight_decay: 5e-4
-  epochs: 2
-  log_every: 1
+dataset: cora
+epochs: 1
+hidden_channels: 32
+heads: 4
+lr: 0.005
+flop_budget: 0.1
+quant_err_budget: 0.02
+log_every: 1
