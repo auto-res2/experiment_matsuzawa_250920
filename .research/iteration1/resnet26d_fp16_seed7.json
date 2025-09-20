@@ -1,0 +1,14 @@
+{
+  "cifar10c": {
+    "top1_error": 100.0,
+    "latency_ms": 1152.46,
+    "energy_J": 68.594,
+    "num_samples": 96
+  },
+  "cifar100c": {
+    "top1_error": 100.0,
+    "latency_ms": 274.33,
+    "energy_J": 19.255,
+    "num_samples": 96
+  }
+}

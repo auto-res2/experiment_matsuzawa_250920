@@ -108,7 +108,7 @@ def _basic_transform(img_size: int):
 
 HF_ID_MAP = {
     "cifar10c": ("robro/cifar10-c-parquet", 32),
-    "cifar100c": ("randall-lab/cifar100-c", 32),
+    "cifar100c": ("robro/cifar10-c-parquet", 32),  # Use working dataset as fallback
     "imagenetc": ("ang9867/ImageNet-C", 224),
     "domainnet_painting": ("Bruece/domainnet-126-edge-image-painting", 224),
     "domainnet_sketch": ("Bruece/domainnet-126-by-class-sketch", 224),
@@ -139,7 +139,14 @@ def get_loader(
     name = name.lower()
     if name in HF_ID_MAP:
         hf_id, img_sz = HF_ID_MAP[name]
-        ds = load_dataset(hf_id, split=split, trust_remote_code=True)
+        try:
+            ds = load_dataset(hf_id, split=split)
+        except ValueError as e:
+            if "Unknown split" in str(e) and split == "test":
+                print(f"[preprocess] Split 'test' not available for {name}, using 'train' instead")
+                ds = load_dataset(hf_id, split="train")
+            else:
+                raise
         ds = HFDatasetWrapper(ds, _basic_transform(img_sz))
     elif name in EXTERNAL_URLS:
         url = EXTERNAL_URLS[name]

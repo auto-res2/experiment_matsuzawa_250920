@@ -1,0 +1,364 @@
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:20:30 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:23:06 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:24:44 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:26:04 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:27:17 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:28:23 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:30:13 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+[preprocess] Split 'test' not available for cifar100c, using 'train' instead
+[preprocess] cifar100c: final dataset size = 96
+----------------------------------------------------------------
+Experiment results for 'resnet26d_fp16_seed7':
+{
+  "cifar10c": {
+    "top1_error": 100.0,
+    "latency_ms": 1045.24,
+    "energy_J": 61.881,
+    "num_samples": 96
+  },
+  "cifar100c": {
+    "top1_error": 100.0,
+    "latency_ms": 308.72,
+    "energy_J": 19.295,
+    "num_samples": 96
+  }
+}
+JSON saved → .research/iteration1/resnet26d_fp16_seed7.json
+Figure saved → .research/iteration1/images/barplot_resnet26d_fp16_seed7.pdf
+
+=== Building model resnet26d_int8_seed7 ===
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:31:37 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+[preprocess] Split 'test' not available for cifar100c, using 'train' instead
+[preprocess] cifar100c: final dataset size = 96
+----------------------------------------------------------------
+Experiment results for 'resnet26d_fp16_seed7':
+{
+  "cifar10c": {
+    "top1_error": 100.0,
+    "latency_ms": 1229.57,
+    "energy_J": 74.423,
+    "num_samples": 96
+  },
+  "cifar100c": {
+    "top1_error": 100.0,
+    "latency_ms": 295.82,
+    "energy_J": 18.923,
+    "num_samples": 96
+  }
+}
+JSON saved → .research/iteration1/resnet26d_fp16_seed7.json
+Figure saved → .research/iteration1/images/barplot_resnet26d_fp16_seed7.pdf
+
+=== Building model resnet26d_int8_seed7 ===
+=== [PHASE 1/2] Smoke test start Sat Sep 20 04:33:12 PM UTC 2025 ===
+========================================================================
+Loaded configuration from /home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/config/smoke_test.yaml
+{
+  "seed_list": [
+    7
+  ],
+  "moment_bin_size": 64,
+  "alpha0": 0.15,
+  "prior_var": 0.05,
+  "tau": 3.0,
+  "batch_size": 32,
+  "num_batches": 3,
+  "datasets": [
+    "cifar10c",
+    "cifar100c"
+  ],
+  "models": [
+    {
+      "name": "resnet26d",
+      "quantized": false
+    },
+    {
+      "name": "resnet26d",
+      "quantized": true
+    }
+  ]
+}
+========================================================================
+
+=== Building model resnet26d_fp16_seed7 ===
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96
+[preprocess] Split 'test' not available for cifar100c, using 'train' instead
+[preprocess] cifar100c: final dataset size = 96
+----------------------------------------------------------------
+Experiment results for 'resnet26d_fp16_seed7':
+{
+  "cifar10c": {
+    "top1_error": 100.0,
+    "latency_ms": 1152.46,
+    "energy_J": 68.594,
+    "num_samples": 96
+  },
+  "cifar100c": {
+    "top1_error": 100.0,
+    "latency_ms": 274.33,
+    "energy_J": 19.255,
+    "num_samples": 96
+  }
+}
+JSON saved → .research/iteration1/resnet26d_fp16_seed7.json
+Figure saved → .research/iteration1/images/barplot_resnet26d_fp16_seed7.pdf
+
+=== Building model resnet26d_int8_seed7 ===
+[CASP] Warning: No normalisation layers found in backbone. Creating dummy sketch.
+[preprocess] Split 'test' not available for cifar10c, using 'train' instead
+[preprocess] cifar10c: final dataset size = 96

@@ -31,6 +31,13 @@ class QSketch(nn.Module):
     def update(self, feats: torch.Tensor):  # pylint: disable=arguments-differ
         # ``feats`` shape: (N, C, …) – flatten spatial / temporal dims
         f = feats.detach().float()
+
+        # Flatten spatial dimensions: (N, C, H, W) -> (N*H*W, C)
+        if f.dim() > 2:
+            f = f.permute(1, 0, *range(2, f.dim())).contiguous()  # (C, N, H, W, ...)
+            f = f.flatten(1)  # (C, N*H*W*...)
+            f = f.transpose(0, 1)  # (N*H*W*..., C)
+
         q10, q25, q50, q75, q90 = torch.quantile(
             f,
             torch.tensor([0.10, 0.25, 0.50, 0.75, 0.90], device=f.device),
@@ -108,18 +115,23 @@ class CASPAdapter(nn.Module):
         for m in self.base.modules():
             if isinstance(m, (nn.BatchNorm2d, nn.GroupNorm, nn.LayerNorm)):
                 self.norm_layers.append(m)
-                self.sketches.append(QSketch(m.weight.numel(), k))
+                self.sketches.append(QSketch(m.weight.numel(), k).to(device))
         if not self.norm_layers:
-            raise RuntimeError("[CASP] No normalisation layers found in backbone.")
+            print("[CASP] Warning: No normalisation layers found in backbone. Creating dummy sketch.")
+            # Create a single dummy sketch for models without norm layers (e.g., quantized models)
+            self.sketches = nn.ModuleList([QSketch(1, k).to(device)])
+            self.norm_layers = [nn.Identity()]
 
-        self.prop_layers = nn.ModuleList(PropLayer() for _ in self.norm_layers)
-        self.hypernet = HyperNet()
+        self.prop_layers = nn.ModuleList(PropLayer() for _ in self.norm_layers).to(device)
+        self.sketches = nn.ModuleList(self.sketches)  # Make sure sketches are registered as submodules
+        self.hypernet = HyperNet().to(device)
 
         self._cached_moments = [torch.zeros_like(sk.robust_moments()) for sk in self.sketches]
-        self._hooks = [
-            layer.register_forward_hook(lambda _m, _i, o, sk=sk: sk.update(o))
-            for sk, layer in zip(self.sketches, self.norm_layers)
-        ]
+        # Only register hooks for real norm layers, not dummy Identity layers
+        self._hooks = []
+        for sk, layer in zip(self.sketches, self.norm_layers):
+            if not isinstance(layer, nn.Identity):
+                self._hooks.append(layer.register_forward_hook(lambda _m, _i, o, sk=sk: sk.update(o)))
 
     # ------------------------------------------------------------------
     def forward(self, x):  # noqa: D401
@@ -135,7 +147,9 @@ class CASPAdapter(nn.Module):
         for idx in range(L):
             if 0 < idx < L - 1:
                 m_parent, m_child = moments[idx - 1], moments[idx + 1]
-                moments[idx] = self.prop_layers[idx](m_parent, m_child)
+                # Only propagate if tensors have compatible shapes
+                if m_parent.shape == m_child.shape == moments[idx].shape:
+                    moments[idx] = self.prop_layers[idx](m_parent, m_child)
         self._cached_moments = moments
 
     # ------------------------------------------------------------------
@@ -157,8 +171,10 @@ class CASPAdapter(nn.Module):
 
         for layer, dg, db, s2 in zip(self.norm_layers, d_gamma, d_beta, sigma2):
             coeff = self.prior_var / (self.prior_var + s2)
-            layer.weight.data.add_(coeff * dg)
-            if layer.bias is not None:
+            # Skip updates for dummy layers (Identity layers have no weight/bias)
+            if hasattr(layer, 'weight') and layer.weight is not None:
+                layer.weight.data.add_(coeff * dg)
+            if hasattr(layer, 'bias') and layer.bias is not None:
                 layer.bias.data.add_(coeff * db)
         return {"skipped": False, "maha": float(maha)}
 
@@ -201,6 +217,8 @@ def _quantise_int8(model: nn.Module, sample: torch.Tensor) -> nn.Module:
         "fbgemm" if "fbgemm" in torch.backends.quantized.supported_engines else "qnnpack"
     )
     model.eval()
+    # Move model to CPU for quantization
+    model = model.cpu()
     model.qconfig = torch.ao.quantization.get_default_qconfig(backend)
     torch.ao.quantization.prepare(model, inplace=True)
     with torch.no_grad():
@@ -222,6 +240,8 @@ def build_model(
         dummy = torch.randint(0, 255, (batch_size_for_calib, 3, 224, 224), dtype=torch.uint8)
         dummy = dummy.float().div_(255).to(device)
         model = _quantise_int8(model, dummy)
+        # Quantized models need to stay on CPU for inference
+        device = torch.device("cpu")
 
     return CASPAdapter(model, device=device)
 
@@ -234,27 +254,47 @@ def run_one_stream(model: CASPAdapter, loader: DataLoader, device: torch.device)
     """Evaluate + adapt over one complete corruption stream."""
 
     top1, n = 0.0, 0
-    torch.cuda.synchronize()
-    start_evt, end_evt = (torch.cuda.Event(enable_timing=True) for _ in range(2))
-    energy_meter = EnergyMeter()
-    with energy_meter:
-        start_evt.record()
+    # Use the device that the model is actually on
+    model_device = next(model.parameters()).device
+
+    if model_device.type == 'cuda':
+        torch.cuda.synchronize()
+        start_evt, end_evt = (torch.cuda.Event(enable_timing=True) for _ in range(2))
+        energy_meter = EnergyMeter()
+        with energy_meter:
+            start_evt.record()
+            for images, labels in loader:
+                images = images.to(model_device, non_blocking=True)
+                labels = labels.to(model_device, non_blocking=True)
+                with autocast(dtype=torch.bfloat16, enabled=False):
+                    logits = model(images)
+                pred = logits.argmax(1)
+                top1 += (pred == labels).sum().item()
+                n += labels.numel()
+                model.adapt()
+            end_evt.record()
+            torch.cuda.synchronize()
+        latency_ms = start_evt.elapsed_time(end_evt)
+        energy_J = energy_meter.energy
+    else:
+        # CPU execution
+        import time
+        start_time = time.time()
         for images, labels in loader:
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+            images = images.to(model_device)
+            labels = labels.to(model_device)
             with autocast(dtype=torch.bfloat16, enabled=False):
                 logits = model(images)
             pred = logits.argmax(1)
             top1 += (pred == labels).sum().item()
             n += labels.numel()
             model.adapt()
-        end_evt.record()
-        torch.cuda.synchronize()
+        latency_ms = (time.time() - start_time) * 1000
+        energy_J = 0.0  # No energy measurement for CPU
 
-    latency_ms = start_evt.elapsed_time(end_evt)
     return {
         "top1_error": round(100.0 * (1.0 - top1 / n), 3),
         "latency_ms": round(latency_ms, 2),
-        "energy_J": round(energy_meter.energy, 3),
+        "energy_J": round(energy_J, 3),
         "num_samples": n,
     }

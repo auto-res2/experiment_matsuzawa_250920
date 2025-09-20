@@ -1,0 +1,452 @@
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.3.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 12, in <module>
+    import torch
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/__init__.py", line 1382, in <module>
+    from .functional import *  # noqa: F403
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/functional.py", line 7, in <module>
+    import torch.nn.functional as F
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+`trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'robro/cifar10-c-parquet' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+Generating train split:   0%|          | 0/950000 [00:00<?, ? examples/s]Generating train split:   2%|▏         | 18400/950000 [00:00<00:05, 181406.86 examples/s]Generating train split:   5%|▍         | 44700/950000 [00:00<00:03, 228051.20 examples/s]Generating train split:   7%|▋         | 68000/950000 [00:00<00:03, 230005.79 examples/s]Generating train split:  11%|█         | 101200/950000 [00:00<00:03, 224824.60 examples/s]Generating train split:  13%|█▎        | 125200/950000 [00:00<00:03, 229552.92 examples/s]Generating train split:  16%|█▌        | 149100/950000 [00:00<00:03, 231933.82 examples/s]Generating train split:  18%|█▊        | 172800/950000 [00:00<00:03, 232828.62 examples/s]Generating train split:  21%|██        | 196800/950000 [00:00<00:03, 234003.70 examples/s]Generating train split:  24%|██▎       | 225300/950000 [00:01<00:08, 83033.32 examples/s] Generating train split:  26%|██▌       | 248200/950000 [00:01<00:06, 101336.13 examples/s]Generating train split:  29%|██▊       | 272600/950000 [00:01<00:05, 122871.08 examples/s]Generating train split:  31%|███       | 295700/950000 [00:01<00:04, 141905.79 examples/s]Generating train split:  34%|███▎      | 320300/950000 [00:02<00:03, 162990.10 examples/s]Generating train split:  37%|███▋      | 348400/950000 [00:02<00:03, 189424.24 examples/s]Generating train split:  39%|███▉      | 373800/950000 [00:02<00:02, 204718.58 examples/s]Generating train split:  42%|████▏     | 398800/950000 [00:02<00:02, 216150.42 examples/s]Generating train split:  46%|████▌     | 434300/950000 [00:03<00:05, 91275.73 examples/s] Generating train split:  48%|████▊     | 457600/950000 [00:03<00:04, 108423.94 examples/s]Generating train split:  51%|█████     | 481500/950000 [00:03<00:03, 127466.60 examples/s]Generating train split:  53%|█████▎    | 504800/950000 [00:03<00:03, 145664.11 examples/s]Generating train split:  56%|█████▌    | 529100/950000 [00:03<00:02, 164764.61 examples/s]Generating train split:  58%|█████▊    | 553400/950000 [00:03<00:02, 181581.80 examples/s]Generating train split:  62%|██████▏   | 585900/950000 [00:03<00:01, 192602.43 examples/s]Generating train split:  64%|██████▍   | 608700/950000 [00:03<00:01, 200608.56 examples/s]Generating train split:  67%|██████▋   | 635300/950000 [00:03<00:01, 216707.20 examples/s]Generating train split:  70%|███████   | 668100/950000 [00:05<00:06, 45518.10 examples/s] Generating train split:  73%|███████▎  | 693100/950000 [00:05<00:04, 58759.20 examples/s]Generating train split:  76%|███████▌  | 718400/950000 [00:05<00:03, 75238.24 examples/s]Generating train split:  78%|███████▊  | 745600/950000 [00:06<00:02, 96491.63 examples/s]Generating train split:  81%|████████  | 771500/950000 [00:06<00:01, 118213.86 examples/s]Generating train split:  84%|████████▍ | 797500/950000 [00:06<00:01, 140942.36 examples/s]Generating train split:  87%|████████▋ | 823500/950000 [00:06<00:00, 163014.16 examples/s]Generating train split:  90%|████████▉ | 850600/950000 [00:06<00:00, 185667.98 examples/s]Generating train split:  92%|█████████▏| 877900/950000 [00:07<00:00, 78618.96 examples/s] Generating train split:  95%|█████████▌| 906900/950000 [00:07<00:00, 102194.56 examples/s]Generating train split:  98%|█████████▊| 932100/950000 [00:07<00:00, 122754.61 examples/s]Generating train split: 100%|██████████| 950000/950000 [00:07<00:00, 121971.76 examples/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 49, in run_experiments
+    loader = get_loader(
+             ^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/preprocess.py", line 142, in get_loader
+    ds = load_dataset(hf_id, split=split, trust_remote_code=True)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/load.py", line 1424, in load_dataset
+    ds = builder_instance.as_dataset(split=split, verification_mode=verification_mode, in_memory=keep_in_memory)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/builder.py", line 1087, in as_dataset
+    datasets = map_nested(
+               ^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/utils/py_utils.py", line 493, in map_nested
+    mapped = function(data_struct)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/builder.py", line 1117, in _build_single_dataset
+    ds = self._as_dataset(
+         ^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/builder.py", line 1191, in _as_dataset
+    dataset_kwargs = ArrowReader(cache_dir, self.info).read(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 248, in read
+    files = self.get_file_instructions(name, instructions, split_infos)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 221, in get_file_instructions
+    file_instructions = make_file_instructions(
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 130, in make_file_instructions
+    absolute_instructions = instruction.to_absolute(name2len)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 620, in to_absolute
+    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 620, in <listcomp>
+    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/arrow_reader.py", line 437, in _rel_to_abs_instr
+    raise ValueError(f'Unknown split "{split}". Should be one of {list(name2len)}.')
+ValueError: Unknown split "test". Should be one of ['train'].
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 55, in run_experiments
+    stats = run_one_stream(model, loader, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 246, in run_one_stream
+    logits = model(images)
+             ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 126, in forward
+    return self.base(x)
+           ^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 724, in forward
+    x = self.forward_features(x)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 693, in forward_features
+    x = self.conv1(x)
+        ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/container.py", line 215, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1581, in _call_impl
+    hook_result = hook(self, args, result)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 120, in <lambda>
+    layer.register_forward_hook(lambda _m, _i, o, sk=sk: sk.update(o))
+                                                         ^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 46, in update
+    self.momentum * self.bins.float() + (1.0 - self.momentum) * m64
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (64) must match the size of tensor b (16) at non-singleton dimension 3
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 55, in run_experiments
+    stats = run_one_stream(model, loader, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 253, in run_one_stream
+    logits = model(images)
+             ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 133, in forward
+    return self.base(x)
+           ^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 724, in forward
+    x = self.forward_features(x)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 693, in forward_features
+    x = self.conv1(x)
+        ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/container.py", line 215, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1581, in _call_impl
+    hook_result = hook(self, args, result)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 127, in <lambda>
+    layer.register_forward_hook(lambda _m, _i, o, sk=sk: sk.update(o))
+                                                         ^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 53, in update
+    self.momentum * self.bins.float() + (1.0 - self.momentum) * m64
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 55, in run_experiments
+    stats = run_one_stream(model, loader, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 258, in run_one_stream
+    model.adapt()
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 154, in adapt
+    self._propagate_moments()
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 146, in _propagate_moments
+    moments[idx] = self.prop_layers[idx](m_parent, m_child)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 72, in forward
+    return w * m_parent + (1.0 - w) * m_child
+           ~~^~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 55, in run_experiments
+    stats = run_one_stream(model, loader, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 258, in run_one_stream
+    model.adapt()
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 154, in adapt
+    self._propagate_moments()
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 146, in _propagate_moments
+    moments[idx] = self.prop_layers[idx](m_parent, m_child)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 72, in forward
+    return w * m_parent + (1.0 - w) * m_child
+           ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (32) must match the size of tensor b (64) at non-singleton dimension 0
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 49, in run_experiments
+    loader = get_loader(
+             ^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/preprocess.py", line 143, in get_loader
+    ds = load_dataset(hf_id, split=split)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/load.py", line 1392, in load_dataset
+    builder_instance = load_dataset_builder(
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/load.py", line 1132, in load_dataset_builder
+    dataset_module = dataset_module_factory(
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/load.py", line 1031, in dataset_module_factory
+    raise e1 from None
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/datasets/load.py", line 989, in dataset_module_factory
+    raise RuntimeError(f"Dataset scripts are no longer supported, but found {filename}")
+RuntimeError: Dataset scripts are no longer supported, but found cifar100-c.py
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py:75: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+  ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/ao/quantization/observer.py:214: UserWarning: Please use quant_min and quant_max to specify the range for observers.                     reduce_range will be deprecated in a future release of PyTorch.
+  warnings.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 45, in run_experiments
+    model = build_model(model_name, quant, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 234, in build_model
+    model = _quantise_int8(model, dummy)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 217, in _quantise_int8
+    model(sample.cpu())  # calibration pass
+    ^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 724, in forward
+    x = self.forward_features(x)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 693, in forward_features
+    x = self.conv1(x)
+        ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/container.py", line 215, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1568, in _call_impl
+    result = forward_call(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 460, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 456, in _conv_forward
+    return F.conv2d(input, weight, bias, self.stride,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Input type (torch.FloatTensor) and weight type (torch.cuda.FloatTensor) should be the same or input should be a MKLDNN tensor and weight is a dense tensor
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py:75: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+  ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/ao/quantization/observer.py:214: UserWarning: Please use quant_min and quant_max to specify the range for observers.                     reduce_range will be deprecated in a future release of PyTorch.
+  warnings.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 45, in run_experiments
+    model = build_model(model_name, quant, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 240, in build_model
+    return CASPAdapter(model, device=device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 120, in __init__
+    raise RuntimeError("[CASP] No normalisation layers found in backbone.")
+RuntimeError: [CASP] No normalisation layers found in backbone.
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:51: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py:75: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+  ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/ao/quantization/observer.py:214: UserWarning: Please use quant_min and quant_max to specify the range for observers.                     reduce_range will be deprecated in a future release of PyTorch.
+  warnings.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 106, in <module>
+    run_experiments(cfg, smoke=args.smoke_test)
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/main.py", line 55, in run_experiments
+    stats = run_one_stream(model, loader, device)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 266, in run_one_stream
+    logits = model(images)
+             ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/src/train.py", line 138, in forward
+    return self.base(x)
+           ^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 724, in forward
+    x = self.forward_features(x)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/timm/models/resnet.py", line 693, in forward_features
+    x = self.conv1(x)
+        ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/container.py", line 215, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/ao/nn/quantized/modules/conv.py", line 468, in forward
+    return ops.quantized.conv2d(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt-80-1-a-13/_work/experiment_matsuzawa_250920/experiment_matsuzawa_250920/.venv/lib/python3.11/site-packages/torch/_ops.py", line 692, in __call__
+    return self._op(*args, **kwargs or {})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NotImplementedError: Could not run 'quantized::conv2d.new' with arguments from the 'CUDA' backend. This could be because the operator doesn't exist for this backend, or was omitted during the selective/custom build process (if using custom build). If you are a Facebook employee using PyTorch on mobile, please visit https://fburl.com/ptmfixes for possible resolutions. 'quantized::conv2d.new' is only available for these backends: [QuantizedCPU, QuantizedCUDA, BackendSelect, Python, FuncTorchDynamicLayerBackMode, Functionalize, Named, Conjugate, Negative, ZeroTensor, ADInplaceOrView, AutogradOther, AutogradCPU, AutogradCUDA, AutogradXLA, AutogradMPS, AutogradXPU, AutogradHPU, AutogradLazy, AutogradMeta, Tracer, AutocastCPU, AutocastCUDA, FuncTorchBatched, FuncTorchVmapMode, Batched, VmapMode, FuncTorchGradWrapper, PythonTLSSnapshot, FuncTorchDynamicLayerFrontMode, PreDispatch, PythonDispatcher].
+
+QuantizedCPU: registered at ../aten/src/ATen/native/quantized/cpu/qconv.cpp:1874 [kernel]
+QuantizedCUDA: registered at ../aten/src/ATen/native/quantized/cudnn/Conv.cpp:388 [kernel]
+BackendSelect: fallthrough registered at ../aten/src/ATen/core/BackendSelectFallbackKernel.cpp:3 [backend fallback]
+Python: registered at ../aten/src/ATen/core/PythonFallbackKernel.cpp:153 [backend fallback]
+FuncTorchDynamicLayerBackMode: registered at ../aten/src/ATen/functorch/DynamicLayer.cpp:498 [backend fallback]
+Functionalize: registered at ../aten/src/ATen/FunctionalizeFallbackKernel.cpp:290 [backend fallback]
+Named: registered at ../aten/src/ATen/core/NamedRegistrations.cpp:7 [backend fallback]
+Conjugate: registered at ../aten/src/ATen/ConjugateFallback.cpp:17 [backend fallback]
+Negative: registered at ../aten/src/ATen/native/NegateFallback.cpp:19 [backend fallback]
+ZeroTensor: registered at ../aten/src/ATen/ZeroTensorFallback.cpp:86 [backend fallback]
+ADInplaceOrView: fallthrough registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:86 [backend fallback]
+AutogradOther: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:53 [backend fallback]
+AutogradCPU: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:57 [backend fallback]
+AutogradCUDA: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:65 [backend fallback]
+AutogradXLA: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:69 [backend fallback]
+AutogradMPS: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:77 [backend fallback]
+AutogradXPU: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:61 [backend fallback]
+AutogradHPU: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:90 [backend fallback]
+AutogradLazy: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:73 [backend fallback]
+AutogradMeta: registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:81 [backend fallback]
+Tracer: registered at ../torch/csrc/autograd/TraceTypeManual.cpp:296 [backend fallback]
+AutocastCPU: fallthrough registered at ../aten/src/ATen/autocast_mode.cpp:382 [backend fallback]
+AutocastCUDA: fallthrough registered at ../aten/src/ATen/autocast_mode.cpp:249 [backend fallback]
+FuncTorchBatched: registered at ../aten/src/ATen/functorch/LegacyBatchingRegistrations.cpp:710 [backend fallback]
+FuncTorchVmapMode: fallthrough registered at ../aten/src/ATen/functorch/VmapModeRegistrations.cpp:28 [backend fallback]
+Batched: registered at ../aten/src/ATen/LegacyBatchingRegistrations.cpp:1075 [backend fallback]
+VmapMode: fallthrough registered at ../aten/src/ATen/VmapModeRegistrations.cpp:33 [backend fallback]
+FuncTorchGradWrapper: registered at ../aten/src/ATen/functorch/TensorWrapper.cpp:203 [backend fallback]
+PythonTLSSnapshot: registered at ../aten/src/ATen/core/PythonFallbackKernel.cpp:161 [backend fallback]
+FuncTorchDynamicLayerFrontMode: registered at ../aten/src/ATen/functorch/DynamicLayer.cpp:494 [backend fallback]
+PreDispatch: registered at ../aten/src/ATen/core/PythonFallbackKernel.cpp:165 [backend fallback]
+PythonDispatcher: registered at ../aten/src/ATen/core/PythonFallbackKernel.cpp:157 [backend fallback]
+
