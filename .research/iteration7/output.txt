@@ -1,0 +1,4 @@
+=== uv sync start Sat Sep 20 03:30:50 PM UTC 2025 ===
+=== uv install end Sat Sep 20 03:30:54 PM UTC 2025 ===
+=== [PHASE 1/2] Smoke test start Sat Sep 20 03:30:54 PM UTC 2025 ===
+preprocess.load_data – no-op (dataset handled in full code-base)
