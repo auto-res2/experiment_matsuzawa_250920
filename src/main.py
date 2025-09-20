@@ -1,7 +1,48 @@
 import argparse
 import sys
 from pathlib import Path
-import yaml
+
+# -----------------------------------------------------------------------------
+# YAML import with graceful fallback.
+# -----------------------------------------------------------------------------
+try:
+    import yaml  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover – fallback if PyYAML is absent
+
+    # Very small subset YAML parser (key: value pairs, primitives only)
+    def _infer_val(v: str):
+        v = v.strip()
+        if v.lower() in {"true", "false"}:
+            return v.lower() == "true"
+        try:
+            return int(v)
+        except ValueError:
+            try:
+                return float(v)
+            except ValueError:
+                return v  # fallback string
+
+    class _MiniYAML:
+        """Drop-in replacement with just safe_load()."""
+
+        @staticmethod
+        def safe_load(stream):
+            if hasattr(stream, "read"):
+                content = stream.read()
+            else:
+                content = str(stream)
+            cfg: dict = {}
+            for raw in content.splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if ":" not in line:
+                    continue  # skip invalid
+                key, val = line.split(":", 1)
+                cfg[key.strip()] = _infer_val(val)
+            return cfg
+
+    yaml = _MiniYAML()  # type: ignore
 
 # relative intra-package imports
 from . import preprocess as _pre

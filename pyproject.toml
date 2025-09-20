@@ -8,6 +8,14 @@ authors = [
 requires-python = ">=3.10"
 readme = "README.md"
 
+# -----------------------------------------------------------------------------
+# Core runtime dependencies (installed automatically by the package manager)
+# -----------------------------------------------------------------------------
+dependencies = [
+  "torch>=1.9.0",
+  "PyYAML>=6.0",
+]
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -16,10 +24,4 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project.optional-dependencies]
-# kept minimal – torch / pyyaml are enough for this snippet
 main = []
-
-dependencies = [
-  "torch>=1.9.0",
-  "PyYAML>=6.0",
-]

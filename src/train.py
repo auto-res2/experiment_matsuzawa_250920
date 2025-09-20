@@ -8,6 +8,7 @@ __all__ = [
     "train",
 ]
 
+
 class ZeroSketch:
     """Zero-update Count-Sketch used by HAWQ-Skim (see paper)."""
 
@@ -90,8 +91,8 @@ def train(cfg: dict) -> dict:
         "rows": sketch.rows,
         "w": sketch.w,
     }
-    # persist metrics under .research/iteration6
-    out_dir = Path(".research") / "iteration6"
+    # persist metrics under .research/iteration7
+    out_dir = Path(".research") / "iteration7"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / (cfg.get("run_name", "sketch_run") + ".json")
     with open(json_path, "w", encoding="utf-8") as f:
