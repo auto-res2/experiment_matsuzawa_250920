@@ -1,0 +1,12 @@
+# config/smoke_test.yaml
+# Minimal configuration – 1 epoch, tiny batch sizes, Reddit dataset.
+dataset: reddit
+model: balo_gat8
+sampler: hawq_skim
+lambda: 1.0
+batch_nodes: 1024
+epochs: 1
+hidden: 64
+heads: 8
+learning_rate: 0.001
+seed: 42

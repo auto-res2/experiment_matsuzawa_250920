@@ -1,0 +1,16 @@
+# config/full_experiment.yaml
+# Production-scale configuration as described in the experimental design.
+# Runs the 16-layer BalO-GAT on OGBN-Papers100M for up to 300 epochs.
+dataset: ogbn_papers100M
+model: balo_gat16
+sampler: hawq_skim
+lambda: 1.0
+batch_nodes: 1000000
+hidden: 64
+heads: 8
+epochs: 300
+learning_rate: 0.001
+weight_decay: 0.0005
+dropout: 0.2
+patience: 20
+seed: 17

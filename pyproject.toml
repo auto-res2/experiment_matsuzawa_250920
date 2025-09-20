@@ -1,1 +1,17 @@
-# Please list the required python packages.
+[project]
+name = "hawq_skim"
+version = "0.1.0"
+description = "Refactored experimental code for HAWQ-Skim graph sampler"
+requires-python = ">=3.10"
+
+# ---------------------------------------------------------------------------
+# Dependencies (minimal – only what is *actually* imported in the stubs)
+# ---------------------------------------------------------------------------
+dependencies = [
+  "pyyaml>=6.0",
+  "torch>=1.13.0",  # required by ZeroSketch
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
